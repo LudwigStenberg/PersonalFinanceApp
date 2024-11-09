@@ -1,6 +1,6 @@
 ﻿namespace PersonalFinanceApp;
 
-public interface IIdGeneratorService
+public interface IIdGenerator
 {
     string GenerateId();
 }

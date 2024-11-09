@@ -1,6 +1,6 @@
 ﻿namespace PersonalFinanceApp.Services.Implementation;
 
-public class TransactionIdGenerator : IIdGeneratorService
+public class TransactionIdGenerator : IIdGenerator
 {
     private const string TransactionPrefix = "TRN";
     private readonly Dictionary<string, int> _dailyTransactionCount = new Dictionary<string, int>();

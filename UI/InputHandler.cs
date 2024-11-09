@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.Globalization;
-using System.Xml.XPath;
+﻿using System.Globalization;
 
 namespace PersonalFinanceApp;
 
@@ -23,7 +20,7 @@ public class InputHandler
         string username;
         string password;
 
-        // Username validation loop
+
         while (true)
         {
             username = GetValidatedStringInput("Choose a username: ");

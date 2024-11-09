@@ -38,7 +38,7 @@ class Program
         _userManager = new UserManager(highestUserId);
         _userManager.LoadUsers(loadedUsers);
 
-        IIdGeneratorService idGenerator = new TransactionIdGenerator();
+        IIdGenerator idGenerator = new TransactionIdGenerator();
         _transactionStorage = new FileTransactionStorage(_fileManager);
         _transactionManager = new TransactionManager(idGenerator, _transactionStorage);
         _loginManager = new LoginManager(_userManager, _fileManager, _transactionManager, _transactionStorage);
@@ -156,7 +156,7 @@ class Program
         }
     }
 
-    private static void RegisterCommands() // Move to CM?
+    private static void RegisterCommands() // Move to C.M?
     {
         _commandManager = new CommandManager();
         _commandManager.RegisterCommand(ConsoleKey.D1,

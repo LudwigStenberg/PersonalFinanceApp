@@ -1,11 +1,4 @@
-﻿using System.Globalization;
-using System.Net;
-using System.Runtime;
-using System.Security.Cryptography.X509Certificates;
-using System.Text.RegularExpressions;
-using System.Transactions;
-
-namespace PersonalFinanceApp;
+﻿namespace PersonalFinanceApp;
 
 public class ConsoleUI
 {
@@ -35,12 +28,6 @@ public class ConsoleUI
 
 
 
-
-
-
-
-
-
     public static void WelcomeUser(UserManager userManager)
     {
         if (userManager.CurrentUser != null)
@@ -59,40 +46,9 @@ public class ConsoleUI
         Console.WriteLine($"Account balance: {accountBalance:C}");
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    public static void DisplayTransactions(TransactionSummary summary, bool viewByTransaction)
-    {
-        if (viewByTransaction)
-        {
-            DisplayTransactionsByIndividual(summary);
-        }
-        else
-        {
-            DisplayTransactionsByCategory(summary);
-        }
-
-
-        DisplaySummary(summary);
-    }
     public static void DisplayTransactionsByIndividual(TransactionSummary summary, bool showIndices = false)
     {
-        Console.Clear();
+        // Console.Clear();
         const int padding = 5;
         const int dateWidth = 15;
         const int typeWidth = 12;
@@ -132,11 +88,12 @@ public class ConsoleUI
             }
         }
         Console.WriteLine(new string('=', padding + dateWidth + typeWidth + amountWidth + categoryWidth + descriptionWidth));
+        DisplaySummary(summary);
     }
 
 
 
-    private static void DisplayTransactionsByCategory(TransactionSummary summary)
+    public static void DisplayTransactionsByCategory(TransactionSummary summary)
     {
         var categorizedTransactions = summary.Transactions
             .GroupBy(t => t.Category)
@@ -155,6 +112,8 @@ public class ConsoleUI
             }
 
             Console.WriteLine($"  Total for {category.Key}: {categoryTotal,10:C}");
+
+            DisplaySummary(summary);
         }
     }
 
@@ -168,7 +127,7 @@ public class ConsoleUI
             return;
         }
 
-        Console.WriteLine("     == Summary ==\n");
+        Console.WriteLine("\n     == Summary ==\n");
         Console.WriteLine($"     Total Income:    {summary.TotalIncome,15:C}\tNumber of transactions: {summary.Transactions.Count}");
         Console.WriteLine($"     Total Expenses:  {summary.TotalExpenses,15:C}\tCurrent view: {summary.TimeUnit}");
         Console.WriteLine($"     Net Result:      {summary.NetResult,15:C}\tCurrent date range: {summary.Transactions.Min(t => t.Date):yyyy-MM-dd} to {summary.Transactions.Max(t => t.Date):yyyy-MM-dd}");

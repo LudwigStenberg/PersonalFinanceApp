@@ -2,7 +2,8 @@
 
 public class Transaction
 {
-    public string TransactionId { get; set; }
+
+    public string TransactionId { get; set; } // Could use GUID next time
     public DateTime Date { get; set; }
     public TransactionType Type { get; set; }
     public decimal Amount { get; set; }
@@ -10,11 +11,6 @@ public class Transaction
     public string CustomCategoryName { get; set; }
     public string Description { get; set; }
     public string UserId { get; private set; }
-
-
-
-
-
 
     public Transaction(string transactionId, DateTime date, TransactionType type, decimal amount, TransactionCategory category, string description, string userId)  // Konstruktor som skapar en ny transaktion med angiven typ, datum, belopp och beskrivning
     {
@@ -26,17 +22,5 @@ public class Transaction
         Description = description;
         UserId = userId;
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
