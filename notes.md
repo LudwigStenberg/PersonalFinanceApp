@@ -1,0 +1,104 @@
+DATABASE-INTEGRATION
+_____________________________________________________________________
+
+Krav för G:
+- Följ instruktionerna i beskrivningen
+- Använd Git för versionshantering
+- Använd PostgreSQL som databas
+
+Krav för VG:
+- Uppnå alla krav för G
+- Spara kontoinformation på ett säkert sätt (hashing av lösenord)
+- Använd SQL JOINS för data hämtning när det går
+- Använd minst två SQL TRANSACTIONS
+- Använd alla normalformer (1NF, 2NF, 3NF)
+- Felhantera alla databasoperationer (try/catch, resource releasing, using)
+
+
+Beskrivning
+Fortsätt på Personal Finance projektet från förra kursen. Det är okej att skriva om projektet från scratch om det känns enklare med kommande uppgifter.
+
+Applikationen skall koppla på och använda en databas för att spara och hantera information. Alla transaktioner skall sparas och hämtas och raderas och uppdateras till/från databas. Det skall även finnas ett kontosystem, med vilket man kan logga in på olika användare, byta mellan dem och lägga till transaktioner. All funktionalitet som fanns i uppgiften från förra kursen skall finnas nu, men kan skall kunna göra det per-användare. En användare kan inte se transaktioner för en annan användare.
+
+
+Förtydligande krav för kontosystem, följande möjligheter skall finnas:
+- Registrera användare genom namn och lösenord
+- Logga in genom namn och lösenord
+- Logga ut (och kunna byta användare genom att logga in igen)
+- All funktionalitet från tidigare uppgift, kopplat per-användare
+
+_____________________________________________________________________
+
+= EGNA TANKAR INFÖR DENNA UPPGIFT = 
+
+Siktar på att uppnå samtliga krav för VG men vill inte fokusera för mycket tid på just detta projekt då jag vill testa lite egna projekt från grund när jag blir färdig. Därför kommer jag att göra val baserat på vad som faktiskt behövs göras och kanske inte på att förbättra programmet ännu mer. Fokus är på lärande inom ramen för uppgift-specifikationen, inte utanför. 
+_____________________________________________________________________
+
+= TODO = 
+
+- = Not completed
+X = Completed
+
+Database
+- Create users table with hashed passwords and timestamps.
+- Create transactions table linked to users via foreign key.
+- Ensure database normalization (1NF, 2NF, 3NF).
+
+Authentication
+- Implement user registration with hashed passwords.
+- Implement login functionality (verify password and load user data).
+- Implement logout functionality.
+
+Transactions
+- Add transactions (CRUD operations).
+- Filter and display transactions for the logged-in user only.
+- Use SQL JOINs for queries involving multiple tables.
+
+Security
+- Hash passwords (e.g. BCrypt?)
+Ensure sensitive data like passwords are not logged or exposed.
+
+Error Handling
+Wrap all database operations in try-catch blocks.
+Log or display meaningful error messages for database issues.
+Use using or IDisposable for resource cleanup.
+
+
+_____________________________________________________________________
+
+= DOCUMENTATION =
+
+Saturday, Nov 23
+- Added Npgsql.
+- New class DatabaseManager in Services.
+- Set up connection specs and constructor for dbManager.
+    - sql table creation for users.
+- Experimenting with a wrapper method for the NpgsqlCommand.ExecuteNonQuery-method.
+    - Unsure how this will work with SQL-injection. Will be mindful.
+- Began implementing AddUser method for adding new users to the database.
+    Uses SQL RETURNING to retrieve user_id and created_at.
+- Changed User.UserId from string to int (match DB type) but may look into GUID/UUID later.
+  
+    
+
+_____________________________________________________________________
+
+= LEARNING NOTES =
+
+The NpgsqlCommand class handles all types of SQL commands: 
+SELECT, INSERT, UPDATE, DELETE. 
+
+The ExecuteNonQuery specifically executes SQL commands that DO NOT return data, which would correspond to all but the "R" in CRUD:
+Create: INSERT
+Update: UPDATE
+Delete: DELETE
+
+The "R" in CRUD is handled by using methods such as ExecuteReader or ExecuteScalar.
+
+The wrapper for ExecuteNonQuery is primarily meant to:
+- Automate the process by abstracting repetitive setup details.
+- Provide centralized error handling for cleaner code.
+- Use using to ensure the NpgsqlCommand object is disposed of properly, avoiding resource leaks.
+
+Thinking of using Async for the practice but will start without it.
+
