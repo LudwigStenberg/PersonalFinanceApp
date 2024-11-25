@@ -11,7 +11,7 @@ public class FileTransactionStorage : ITransactionStorage
 
 
 
-    public async Task<bool> SaveTransactionsAsync(List<Transaction> transactions, string userId)
+    public async Task<bool> SaveTransactionsAsync(List<Transaction> transactions, int userId)
     {
         try
         {
@@ -29,7 +29,7 @@ public class FileTransactionStorage : ITransactionStorage
 
 
 
-    public async Task<List<Transaction>> LoadTransactionsAsync(string userId)
+    public async Task<List<Transaction>> LoadTransactionsAsync(int userId)
     {
         try
         {

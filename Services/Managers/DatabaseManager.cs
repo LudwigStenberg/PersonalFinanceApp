@@ -7,7 +7,7 @@ public class DatabaseManager
 {
     private NpgsqlConnection connection;
     private readonly string _connectionString =
-        "Host=localhost;Port=5432;Database=PersonalFinanceApp;Username=Postgres;Password=password;";
+        "Host=localhost;Port=5432;Database=PersonalFinanceApp;Username=postgres;Password=assword;";
 
     public DatabaseManager()
     {
@@ -47,29 +47,40 @@ public class DatabaseManager
 
 
 
-    // Not including Users CreatedAt and UserId as params here since the DB will create these.
-    public User AddUsers(string username, string hashedPassword)
+
+    public User AddUser(string username, string passwordHashed)
     {
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(passwordHashed))
+        {
+            throw new ArgumentException("Username and password cannot be null or empty.");
+        }
+
         string sql =
             @"
             INSERT INTO users (username, password_hashed) 
             VALUES (@Username, @PasswordHash) 
-            RETURNING user_id, created_At
+            RETURNING user_id
             ";
 
-        using var cmd = new NpgsqlCommand(sql, connection);
-        cmd.Parameters.AddWithValue("@Username", username);
-        cmd.Parameters.AddWithValue("@PasswordHash", hashedPassword);
-
-
-        using var reader = cmd.ExecuteReader();
-        if (reader.Read())
+        try
         {
+            using var cmd = new NpgsqlCommand(sql, connection);
+            cmd.Parameters.AddWithValue("@Username", username);
+            cmd.Parameters.AddWithValue("@PasswordHash", passwordHashed);
 
-            int userId = reader.GetInt32(0); // column 1
-            DateTime createdAt = reader.GetDateTime(3); // column 4
+            // Add Try-catch?
+            using var reader = cmd.ExecuteReader();
+            if (reader.Read())
+            {
 
-            return new User(userId, username, hashedPassword, createdAt);
+                int userId = reader.GetInt32(0);
+
+                return new User(userId, username, passwordHashed);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding user: {ex.Message}");
         }
 
         return null;

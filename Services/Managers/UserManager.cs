@@ -1,17 +1,21 @@
 
+using BCrypt.Net;
+
 namespace PersonalFinanceApp;
 
 public class UserManager
 {
+    private readonly DatabaseManager _dbManager;
     private Dictionary<string, User> users = new Dictionary<string, User>();
-    private const string UserPrefix = "USER";
     public int HighestUserId { get; private set; }
     public User CurrentUser { get; private set; }
 
-    public UserManager(int highestUserId)
+    public UserManager(DatabaseManager dbManager, int highestUserId)
     {
+        _dbManager = dbManager;
         HighestUserId = highestUserId;
     }
+
 
     public List<User> GetAllUsers()
     {
@@ -27,15 +31,10 @@ public class UserManager
         }
 
         HighestUserId = loadedUsers.Count > 0
-            ? loadedUsers.Max(u => int.Parse(u.UserId.Substring(4)))
+            ? loadedUsers.Max(u => u.UserId)
             : 0;
     }
 
-    private string GenerateUserId()
-    {
-        string userNumber = $"{HighestUserId + 1:D6}";
-        return UserPrefix + userNumber;
-    }
 
     public bool AddNewUser(string username, User newUser)
     {
@@ -55,21 +54,26 @@ public class UserManager
 
     public bool CreateAccount(string username, string password)
     {
-        string userId = GenerateUserId();
-        User newUser = new User(userId, username, password);
+        string passwordHashed = BCrypt.Net.BCrypt.HashPassword(password);
+
+        if (_dbManager == null)
+        {
+            throw new InvalidOperationException("DatabaseManager (_dbManager) is not initialized.");
+        }
+        User newUser = _dbManager.AddUser(username, passwordHashed);
         if (AddNewUser(username, newUser))
         {
             HighestUserId++;
-            return AuthenticateUser(username, password);
+            return AuthenticateUser(username, passwordHashed);
         }
         return false;
     }
 
-    public bool AuthenticateUser(string username, string password)
+    public bool AuthenticateUser(string username, string passwordHashed)
     {
         if (users.TryGetValue(username.ToLower(), out User user))
         {
-            if (user.Password == password)
+            if (BCrypt.Net.BCrypt.Verify(passwordHashed, user.HashedPassword))
             {
                 CurrentUser = user;
                 return true;
@@ -78,7 +82,7 @@ public class UserManager
         return false;
     }
 
-    public async Task<bool> SignOut(List<Transaction> transactions, string userId,
+    public async Task<bool> SignOut(List<Transaction> transactions, int userId,
                                   FileManager fileManager, UserManager userManager)
     {
         if (!await fileManager.SaveToFileAsync(transactions, userId))

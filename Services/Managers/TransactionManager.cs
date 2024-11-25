@@ -13,7 +13,7 @@ public class TransactionManager : ITransactionOperations
         _transactionStorage = transactionStorage;
     }
 
-    public Transaction CreateTransaction(TransactionInputDTO dto, TransactionType type, string userId)
+    public Transaction CreateTransaction(TransactionInputDTO dto, TransactionType type, int userId)
     {
         string transactionId = _idGenerator.GenerateId();
         return new Transaction(transactionId, dto.Date, type, dto.Amount,
@@ -39,7 +39,7 @@ public class TransactionManager : ITransactionOperations
         _transactions = transactions ?? new List<Transaction>();
     }
 
-    public List<Transaction> GetCurrentUserTransactions(string userId)
+    public List<Transaction> GetCurrentUserTransactions(int userId)
     {
         return _transactions.Where(t => t.UserId == userId).ToList();
     }

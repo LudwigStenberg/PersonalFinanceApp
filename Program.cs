@@ -13,36 +13,59 @@ class Program
 
     static async Task Main(string[] args)
     {
-        await Initialize();
-        RegisterCommands();
-
-        bool isRunning = true;
-        while (isRunning)
+        try
         {
-            isRunning = await RunLoginMenu();
-        }
+            // TESTING
+            // var dbManager = new DatabaseManager();
+            // var user = dbManager.AddUser("testUser2", "hashedPassword");
+            // Console.WriteLine(user != null ? $"User created: {user.UserId}" : "User creation failed");
+            // Console.ReadKey();
 
-        await SaveAndExit();
+            await Initialize();
+            RegisterCommands();
+
+            bool isRunning = true;
+            while (isRunning)
+            {
+                isRunning = await RunLoginMenu();
+            }
+
+            await SaveAndExit();
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine($"Input error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An unexpected error occurred: {ex.Message}");
+        }
     }
+
 
     static async Task Initialize()
     {
         _fileManager = new FileManager();
         _fileManager.EnsureUserDataDirectoryExists();
 
+        // Load users and calculate the highest UserId
         List<User> loadedUsers = await _fileManager.LoadUsersAsync();
         int highestUserId = loadedUsers.Count > 0
-            ? loadedUsers.Max(u => int.Parse(u.UserId.Substring(4)))
+            ? loadedUsers.Max(u => (u.UserId))
             : 0;
 
-        _userManager = new UserManager(highestUserId);
+        // Initialize DatabaseManager and UserManager
+        var _dbManager = new DatabaseManager();
+        _userManager = new UserManager(_dbManager, highestUserId);
         _userManager.LoadUsers(loadedUsers);
 
+        // Initialize other managers
         IIdGenerator idGenerator = new TransactionIdGenerator();
         _transactionStorage = new FileTransactionStorage(_fileManager);
         _transactionManager = new TransactionManager(idGenerator, _transactionStorage);
         _loginManager = new LoginManager(_userManager, _fileManager, _transactionManager, _transactionStorage);
     }
+
 
     static async Task<bool> RunLoginMenu()
     {
@@ -173,7 +196,7 @@ class Program
     {
         if (_userManager.CurrentUser != null)
         {
-            string userId = _userManager.CurrentUser.UserId;
+            int userId = _userManager.CurrentUser.UserId;
             List<Transaction> transactions = _transactionManager.GetCurrentUserTransactions(userId);
 
             await _transactionStorage.SaveTransactionsAsync(transactions, userId);

@@ -1,1 +1,1 @@
-[{"UserId":"USER000001","Username":"Mike","Password":"Mike123!"},{"UserId":"USER000002","Username":"Ludwig","Password":"Stenberg!123"}]
+[{"UserId":5,"Username":"YeahRealAccount","Password":"FakestPassword!123","CreatedAt":"0001-01-01T00:00:00"},{"UserId":6,"Username":"RealAccountTwo","Password":"YeahCoolPassword!123","CreatedAt":"0001-01-01T00:00:00"}]

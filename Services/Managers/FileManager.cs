@@ -12,7 +12,7 @@ public class FileManager
         Directory.CreateDirectory(UserDataDir);
     }
 
-    public async Task<bool> SaveToFileAsync(List<Transaction> transactions, string userId)
+    public async Task<bool> SaveToFileAsync(List<Transaction> transactions, int userId)
     {
         EnsureUserDataDirectoryExists();
         string filePath = Path.Combine(UserDataDir, $"{userId}.json");
@@ -30,7 +30,7 @@ public class FileManager
         }
     }
 
-    public async Task<List<Transaction>> LoadFromFileAsync(string userId)
+    public async Task<List<Transaction>> LoadFromFileAsync(int userId)
     {
         string filePath = Path.Combine(UserDataDir, $"{userId}.json");
 
