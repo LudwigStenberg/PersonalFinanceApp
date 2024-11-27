@@ -101,24 +101,14 @@ Added BCrypt
     - Fixed AuthenticateUser to check against hashedPassword instead
     - Changed User.cs Password to HashedPassword
 
-_____________________________________________________________________
+--- 
+Wednesday, Nov 27
+Changes to dbManager constructor:
+    - Added SQL for create transaction_type_enum
+    - Added SQL for create transactions table
+        - Included ON DELETE CASCADE to preserve referential integrity upon deletion of a user.
+    - Isolated each SQL-command to call their own ExecuteNonQuery()
+        - Why? Debugging and maintainability.
+    - 
 
-= LEARNING NOTES =
-
-The NpgsqlCommand class handles all types of SQL commands:
-SELECT, INSERT, UPDATE, DELETE.
-
-The ExecuteNonQuery specifically executes SQL commands that DO NOT return data, which would correspond to all but the "R" in CRUD:
-Create: INSERT
-Update: UPDATE
-Delete: DELETE
-
-The "R" in CRUD is handled by using methods such as ExecuteReader or ExecuteScalar.
-
-The wrapper for ExecuteNonQuery is primarily meant to:
-- Automate the process by abstracting repetitive setup details.
-- Provide centralized error handling for cleaner code.
-- Use using to ensure the NpgsqlCommand object is disposed of properly, avoiding resource leaks.
-
-Thinking of using Async for the practice but will start without it.
 

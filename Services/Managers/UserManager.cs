@@ -60,20 +60,21 @@ public class UserManager
         {
             throw new InvalidOperationException("DatabaseManager (_dbManager) is not initialized.");
         }
+
         User newUser = _dbManager.AddUser(username, passwordHashed);
         if (AddNewUser(username, newUser))
         {
             HighestUserId++;
-            return AuthenticateUser(username, passwordHashed);
+            return AuthenticateUser(username, password);
         }
         return false;
     }
 
-    public bool AuthenticateUser(string username, string passwordHashed)
+    public bool AuthenticateUser(string username, string password)
     {
         if (users.TryGetValue(username.ToLower(), out User user))
         {
-            if (BCrypt.Net.BCrypt.Verify(passwordHashed, user.HashedPassword))
+            if (BCrypt.Net.BCrypt.Verify(password, user.HashedPassword))
             {
                 CurrentUser = user;
                 return true;

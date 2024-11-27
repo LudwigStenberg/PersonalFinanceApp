@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using Npgsql;
 using PersonalFinanceApp;
 
@@ -9,28 +10,83 @@ public class DatabaseManager
     private readonly string _connectionString =
         "Host=localhost;Port=5432;Database=PersonalFinanceApp;Username=postgres;Password=assword;";
 
+    private const string CreateUsersTableSql = @"
+        CREATE TABLE IF NOT EXISTS users (
+            user_id SERIAL PRIMARY KEY,
+            username VARCHAR(50) UNIQUE NOT NULL,
+            password_hashed TEQXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )";
+
+    private const string CreateTransactionsTableSql = @"
+        CREATE TABLE transactions (
+            transaction_id SERIAL PRIMARY KEY,
+            user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+            type transaction_type_enum NOT NULL,
+            amount DECIMAL(10, 2) NOT NULL,
+            date TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0),
+            category VARCHAR(25) NOT NULL,
+            description VARCHAR(50)
+        )";
+
+    private const string CreateTypeEnumSql = @"
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_type_enum') THEN
+                CREATE TYPE transaction_type_enum AS ENUM ('Income', 'Expense');
+            END IF;
+        END $$;
+        ";
+
+
     public DatabaseManager()
     {
-        this.connection = new NpgsqlConnection(_connectionString);
-        connection.Open();
+        try
+        {
+            this.connection = new NpgsqlConnection(_connectionString);
+            connection.Open();
+            InitializeDatabase();
 
-        // Create the tables (IF NOT EXIST) here
-        string createUsersTableSql =
-            @"CREATE TABLE IF NOT EXISTS users (
-                user_id SERIAL PRIMARY KEY,
-
-                username VARCHAR(50) UNIQUE NOT NULL,
-                password_hashed TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-            )";
-
-        using var createTableCmd = new NpgsqlCommand(createUsersTableSql, connection);
-        createTableCmd.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error initializing database: {ex.Message}");
+            throw;
+        }
     }
 
 
-    // Testing a wrapper-method that helps me by removing the 
-    // need to manually close the connection when DatabaseManager is no longer neeeded.
+
+    private void InitializeDatabase()
+    {
+        try
+        {
+            Console.WriteLine("Creating users table...");
+            using var createUsersTableCmd = new NpgsqlCommand(CreateUsersTableSql, connection);
+            createUsersTableCmd.ExecuteNonQuery();
+
+            Console.WriteLine("Creating transaction type enum...");
+            using var createTypeEnumSqlCmd = new NpgsqlCommand(CreateTypeEnumSql, connection);
+            createTypeEnumSqlCmd.ExecuteNonQuery();
+
+            Console.WriteLine("Creating transactions table...");
+            using var createTransactionsTableSqlCmd = new NpgsqlCommand(CreateTransactionsTableSql, connection);
+            createTransactionsTableSqlCmd.ExecuteNonQuery();
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during database initialization: {ex.Message}");
+            throw;
+        }
+    }
+
+
+
+
+
+
+
     public void ExecuteNonQuery(string sql)
     {
         try
