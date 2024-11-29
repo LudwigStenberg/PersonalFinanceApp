@@ -70,18 +70,21 @@ public class UserManager
         return false;
     }
 
+
     public bool AuthenticateUser(string username, string password)
     {
-        if (users.TryGetValue(username.ToLower(), out User user))
+        // Read user from the DB.
+        User user = _dbManager.GetUserByUsername(username);
+        if (user != null && BCrypt.Net.BCrypt.Verify(password, user.HashedPassword))
         {
-            if (BCrypt.Net.BCrypt.Verify(password, user.HashedPassword))
-            {
-                CurrentUser = user;
-                return true;
-            }
+            CurrentUser = user;
+            return true;
         }
+
+        // Authentication failed.
         return false;
     }
+
 
     public async Task<bool> SignOut(List<Transaction> transactions, int userId,
                                   FileManager fileManager, UserManager userManager)

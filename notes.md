@@ -66,6 +66,18 @@ Use using or IDisposable for resource cleanup.
 
 _____________________________________________________________________
 
+= QUESTIONS AND CONSIDERATIONS =
+Should I have UUID for my user_id and tx_id, or just use SERIAL?
+  - SERIAL: Simpler, easier to read, may be more appropriate for my application.
+  - UUID: Better security, more common in professional environs, good practice.
+
+Should I explicitly call the reader.Close() instead of just relying on the 'using'?
+ - Probably not, unless more complex logic is introduced.
+
+
+
+_____________________________________________________
+________________
 = DOCUMENTATION =
 
 Saturday, Nov 23 
@@ -103,12 +115,37 @@ Added BCrypt
 
 --- 
 Wednesday, Nov 27
-Changes to dbManager constructor:
-    - Added SQL for create transaction_type_enum
-    - Added SQL for create transactions table
-        - Included ON DELETE CASCADE to preserve referential integrity upon deletion of a user.
-    - Isolated each SQL-command to call their own ExecuteNonQuery()
-        - Why? Debugging and maintainability.
-    - 
+Changes to DatabaseManager:
+  Added SQL string for create transaction_type_enum
+  Added SQL string for create transactions table
+    - Included ON DELETE CASCADE to preserve referential integrity upon deletion of a user.
+ 
+  Isolated each SQL-command to call their own ExecuteNonQuery()
+    - Why? Debugging and maintainability.
+
+  Moved the SQL string commands to be initialized as constant fields.
+    - Cleaner constructor, better performance, static and immutable.
+
+  Created InitializeDatabase() to further simplify the constructor
+    - Executes the SQL commands
+    - Added logging messages (only console.writelines)
+
+--- 
+Friday, Nov 29
+
+- Added GetUserByUsername() to DatabaseManager for reading users from the DB through a query.
+- Adjusted AuthenticateUser to instead of relying on the Dictionary users (loaded from file)
+it now uses the above GetUser method to retrieve the user and let BCrypt verify the inputted 
+password against the hashed pw.
+- DatabaseManager.AddUser() - changed from ExecuteReader to ExecuteScalar for RETURNING user_id (single value).
 
 
+------------------------------------------------------
+TODO:
+- Remove ITransactinIDGenerator?~
+- Refactor the transaction storage system to prioritize 
+  database storage while keeping file storage as a backup or 
+  optional feature. 
+ - Update the flow so the program doesn't require a file to exist if 
+  the database is being used.
+  
