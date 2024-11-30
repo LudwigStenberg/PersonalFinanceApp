@@ -62,7 +62,7 @@ public class DatabaseManager : IDisposable
     }
 
 
-    public void DisposeAlt()
+    public void Dispose()
     {
         if (connection == null) return; // 1. Guard-clause for immediate handling.
 
@@ -112,7 +112,6 @@ public class DatabaseManager : IDisposable
             Console.WriteLine($"Error executing SQL: {sql}. Exception: {ex.Message}");
         }
     }
-
 
 
 

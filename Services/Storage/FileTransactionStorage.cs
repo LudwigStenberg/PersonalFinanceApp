@@ -11,24 +11,6 @@ public class FileTransactionStorage : ITransactionStorage
 
 
 
-    public async Task<bool> SaveTransactionsAsync(List<Transaction> transactions, int userId)
-    {
-        try
-        {
-            return await _fileManager.SaveToFileAsync(transactions, userId);
-
-        }
-        catch (Exception ex)
-        {
-            ConsoleUI.DisplayError($"There was an error saving the file: {ex.Message}");
-        }
-
-        return false;
-
-    }
-
-
-
     public async Task<List<Transaction>> LoadTransactionsAsync(int userId)
     {
         try
@@ -45,5 +27,22 @@ public class FileTransactionStorage : ITransactionStorage
             ConsoleUI.DisplayError($"Unexpected error loading transactions: {ex.Message}");
             return new List<Transaction>();
         }
+    }
+
+
+    public async Task<bool> SaveTransactionsAsync(List<Transaction> transactions, int userId)
+    {
+        try
+        {
+            return await _fileManager.SaveToFileAsync(transactions, userId);
+
+        }
+        catch (Exception ex)
+        {
+            ConsoleUI.DisplayError($"There was an error saving the file: {ex.Message}");
+        }
+
+        return false;
+
     }
 }

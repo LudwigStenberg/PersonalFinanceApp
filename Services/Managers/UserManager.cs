@@ -16,7 +16,6 @@ public class UserManager
         HighestUserId = highestUserId;
     }
 
-
     public List<User> GetAllUsers()
     {
         return users.Values.ToList();
