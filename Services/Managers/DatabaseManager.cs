@@ -3,7 +3,6 @@ using Npgsql;
 using PersonalFinanceApp;
 
 
-
 public class DatabaseManager : IDisposable
 {
     private readonly NpgsqlConnection connection;
@@ -62,6 +61,7 @@ public class DatabaseManager : IDisposable
     }
 
 
+
     public void Dispose()
     {
         if (connection == null) return; // 1. Guard-clause for immediate handling.
@@ -73,6 +73,7 @@ public class DatabaseManager : IDisposable
 
         connection.Dispose(); // Dispose the connection to release resources.
     }
+
 
     private void InitializeDatabase()
     {
@@ -175,9 +176,5 @@ public class DatabaseManager : IDisposable
         }
 
         return null;
-
     }
-
-
-
 }
