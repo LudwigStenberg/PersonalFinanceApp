@@ -4,19 +4,19 @@ namespace PersonalFinanceApp;
 
 public class RemoveTransactionCommand : ICommand
 {
-    private readonly TransactionManager _transactionManager;
-    private readonly UserService _userManager;
+    private readonly TransactionService _transactionService;
+    private readonly UserService _userService;
 
-    public RemoveTransactionCommand(TransactionManager transactionManager, UserService userManager)
+    public RemoveTransactionCommand(TransactionService transactionService, UserService userService)
     {
-        _transactionManager = transactionManager;
-        _userManager = userManager;
+        _transactionService = transactionService;
+        _userService = userService;
     }
 
     public void Execute()
     {
         // Get current transactions
-        var summary = _transactionManager.PrepareTransactionData("Day", _userManager);
+        var summary = _transactionService.PrepareTransactionData("Day", _userService);
 
         // Display transactions with indices
         ConsoleUI.DisplayTransactionsByIndividual(summary, true);
@@ -27,7 +27,7 @@ public class RemoveTransactionCommand : ICommand
 
         // Remove the transaction
         Transaction transactionToRemove = summary.Transactions[index - 1];
-        if (_transactionManager.RemoveTransaction(transactionToRemove, _userManager))
+        if (_transactionService.RemoveTransaction(transactionToRemove, _userService))
         {
             ConsoleUI.DisplaySuccess("Transaction removed successfully.");
         }

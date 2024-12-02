@@ -98,7 +98,7 @@ DatabaseManager.AddUser():
 
 Added try/catch to Main for testing AddUser when resolved errors from changing UserId from string to int.
 
-Refactoring UserManager (userId)
+Refactoring UserService (userId)
     - removed LoadUsers' int parsing
     - removed GenerateUserId method and its calling in CreateAccount.
     - added private readonly field _dbManager
@@ -147,8 +147,12 @@ Saturday, Nov 30
 Changed transaction.cs TransactionId from string to int to match database. Simplicity.
 Started working on DatabaseTransactionStorage's LoadTransactionsAsync.
 
+------------------------------------------------------------------------
+
 Sunday, Dec 1
 Implemented SaveTransactionsAsync for DatabaseTransactionStorage.cs
+
+------------------------------------------------------------------------
 
 Monday, Dec 2
 Finalized SaveTransactionsAsync for DatabaseTransactionStorage.cs.
@@ -156,15 +160,37 @@ Finalized SaveTransactionsAsync for DatabaseTransactionStorage.cs.
 Renamed:
 DatabaseManager    --> DatabaseService
 TransactionManager --> TransactionService
-UserManager        --> UserService
+UserService        --> UserService
 
- 
+ Removed IIdGenerator.cs and TransactionIdGenerator (SERIAL for now).
+
+------------------------------------------------------------------------
+Tuesday, Dec 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 ------------------------------------------------------------------------
 Next TODO:
-Add Transactions for ACID adherence.
+Refactor TransactionService to rely on ITransactionStorage for storage. Abstract FileStorage and DatabaseStorage behind it.
+ - Remove in-memory storage (list _transactions)
 
 
 
@@ -177,3 +203,6 @@ TODO:
  - Update the flow so the program doesn't require a file to exist if 
   the database is being used.
 - Check SQLTransactions ACID. Rollback()
+- check out vertical slice architecture for folder/file structure
+- Do I need the transactionId in Transaction.cs constructor?
+- Should I remove ITransactionOperations?

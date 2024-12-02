@@ -32,7 +32,7 @@ public class InputHandler
             ConsoleUI.DisplayError(errorMessage);
         }
 
-        // Password validation loop
+
         while (true)
         {
             password = GetMaskedPassword("Choose a password: ");

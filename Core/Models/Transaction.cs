@@ -12,9 +12,9 @@ public class Transaction
     public string Description { get; set; }
     public int UserId { get; private set; }
 
-    public Transaction(int transactionId, DateTime date, TransactionType type, decimal amount, TransactionCategory category, string description, int userId)  // Konstruktor som skapar en ny transaktion med angiven typ, datum, belopp och beskrivning
+    public Transaction(DateTime date, TransactionType type, decimal amount, TransactionCategory category, string description, int userId)  // Konstruktor som skapar en ny transaktion med angiven typ, datum, belopp och beskrivning
     {
-        TransactionId = transactionId;
+        // TransactionId = transactionId;
         Date = date;
         Type = type;
         Amount = amount;

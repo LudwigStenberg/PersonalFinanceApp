@@ -28,21 +28,21 @@ public class ConsoleUI
 
 
 
-    public static void WelcomeUser(UserService userManager)
+    public static void WelcomeUser(UserService UserService)
     {
-        if (userManager.CurrentUser != null)
+        if (UserService.CurrentUser != null)
         {
-            Console.WriteLine($"\nGood to see you, {userManager.CurrentUser.Username}!");
+            Console.WriteLine($"\nGood to see you, {UserService.CurrentUser.Username}!");
             Thread.Sleep(1500);
         }
     }
 
 
-    public static void DisplayDashboard(TransactionManager transactionManager)
+    public static void DisplayDashboard(TransactionService transactionService)
     {
         Console.Clear();
         Console.WriteLine("== Dashboard ==\n");
-        decimal accountBalance = transactionManager.GetAccountBalance();
+        decimal accountBalance = transactionService.GetAccountBalance();
         Console.WriteLine($"Account balance: {accountBalance:C}");
     }
 

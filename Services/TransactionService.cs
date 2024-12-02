@@ -3,20 +3,18 @@ namespace PersonalFinanceApp;
 
 public class TransactionService : ITransactionOperations
 {
-    private readonly IIdGenerator _idGenerator;
     private readonly ITransactionStorage _transactionStorage;
     private List<Transaction> _transactions = new List<Transaction>();
 
-    public TransactionService(IIdGenerator idGenerator, ITransactionStorage transactionStorage)
+    public TransactionService(ITransactionStorage transactionStorage)
     {
-        _idGenerator = idGenerator;
+
         _transactionStorage = transactionStorage;
     }
 
     public Transaction CreateTransaction(TransactionInputDTO dto, TransactionType type, int userId)
     {
-        string transactionId = _idGenerator.GenerateId();
-        return new Transaction(transactionId, dto.Date, type, dto.Amount,
+        return new Transaction(dto.Date, type, dto.Amount,
                              dto.Category, dto.Description, userId)
         {
             CustomCategoryName = dto.CustomCategoryName
@@ -28,9 +26,9 @@ public class TransactionService : ITransactionOperations
         _transactions.Add(transaction);
     }
 
-    public bool RemoveTransaction(Transaction transactionToRemove, UserManager userManager)
+    public bool RemoveTransaction(Transaction transactionToRemove, UserService userService)
     {
-        return transactionToRemove.UserId == userManager.CurrentUser.UserId &&
+        return transactionToRemove.UserId == userService.CurrentUser.UserId &&
                _transactions.Remove(transactionToRemove);
     }
 
@@ -44,25 +42,25 @@ public class TransactionService : ITransactionOperations
         return _transactions.Where(t => t.UserId == userId).ToList();
     }
 
-    public int GetTransactionCount(UserManager userManager)
+    public int GetTransactionCount(UserService userService)
     {
-        return _transactions.Count(t => t.UserId == userManager.CurrentUser.UserId);
+        return _transactions.Count(t => t.UserId == userService.CurrentUser.UserId);
     }
 
-    public List<Transaction> GetOrderedTransactions(UserManager userManager)
+    public List<Transaction> GetOrderedTransactions(UserService userService)
     {
         return _transactions
-            .Where(t => t.UserId == userManager.CurrentUser.UserId)
+            .Where(t => t.UserId == userService.CurrentUser.UserId)
             .OrderBy(t => t.Date)
             .ToList();
     }
 
-    public (decimal TotalIncome, decimal TotalExpenses) CalculateTotals(UserManager userManager)
+    public (decimal TotalIncome, decimal TotalExpenses) CalculateTotals(UserService userService)
     {
         decimal totalIncome = 0;
         decimal totalExpenses = 0;
 
-        foreach (Transaction transaction in _transactions.Where(t => t.UserId == userManager.CurrentUser.UserId))
+        foreach (Transaction transaction in _transactions.Where(t => t.UserId == userService.CurrentUser.UserId))
         {
             if (transaction.Type == TransactionType.Income)
             {
@@ -93,15 +91,15 @@ public class TransactionService : ITransactionOperations
         return accountBalance;
     }
 
-    public TransactionSummary PrepareTransactionData(string timeUnit, UserManager userManager)
+    public TransactionSummary PrepareTransactionData(string timeUnit, UserService userService)
     {
-        if (GetTransactionCount(userManager) == 0)
+        if (GetTransactionCount(userService) == 0)
         {
             return new TransactionSummary(timeUnit);
         }
 
         TransactionSummary summary = new TransactionSummary(timeUnit);
-        summary.Transactions = GetOrderedTransactions(userManager);
+        summary.Transactions = GetOrderedTransactions(userService);
 
         foreach (Transaction transaction in summary.Transactions)
         {
@@ -115,7 +113,7 @@ public class TransactionService : ITransactionOperations
             summary.GroupedTransactions[groupKey].Add(transaction);
         }
 
-        var (totalIncome, totalExpense) = CalculateTotals(userManager);
+        var (totalIncome, totalExpense) = CalculateTotals(userService);
         summary.TotalIncome = totalIncome;
         summary.TotalExpenses = totalExpense;
         summary.NetResult = totalIncome - totalExpense;

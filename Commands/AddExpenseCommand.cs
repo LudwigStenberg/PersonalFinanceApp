@@ -4,13 +4,13 @@ namespace PersonalFinanceApp;
 
 public class AddExpenseCommand : ICommand
 {
-    private readonly TransactionManager _transactionManager;
-    private readonly UserService _userManager;
+    private readonly TransactionService _transactionService;
+    private readonly UserService _userService;
 
-    public AddExpenseCommand(TransactionManager transactionManager, UserService userManager)
+    public AddExpenseCommand(TransactionService transactionService, UserService userService)
     {
-        _transactionManager = transactionManager;
-        _userManager = userManager;
+        _transactionService = transactionService;
+        _userService = userService;
     }
 
     public void Execute()
@@ -19,8 +19,8 @@ public class AddExpenseCommand : ICommand
         Console.WriteLine("Add Expense\n");
 
         TransactionInputDTO transactionData = InputHandler.GetTransactionInput();
-        Transaction transaction = _transactionManager.CreateTransaction(transactionData, TransactionType.Expense, _userManager.CurrentUser.UserId);
-        _transactionManager.AddTransaction(transaction);
+        Transaction transaction = _transactionService.CreateTransaction(transactionData, TransactionType.Expense, _userService.CurrentUser.UserId);
+        _transactionService.AddTransaction(transaction);
         ConsoleUI.DisplaySuccess("Expense added successfully.");
 
         Console.ReadKey();

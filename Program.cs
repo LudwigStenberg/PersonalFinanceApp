@@ -1,15 +1,13 @@
-﻿using PersonalFinanceApp.Services.Implementation;
-
-namespace PersonalFinanceApp;
+﻿namespace PersonalFinanceApp;
 
 class Program
 {
-    private static CommandManager _commandManager;
-    private static UserService _userService;
-    private static FileManager _fileManager;
-private static ITransactionStorage _transactionStorage;
+    private static ITransactionStorage _transactionStorage;
     private static TransactionService _transactionService;
+    private static UserService _userService;
     private static LoginManager _loginManager;
+    private static CommandManager _commandManager;
+    private static FileManager _fileManager;
 
     static async Task Main(string[] args)
     {
@@ -60,9 +58,8 @@ private static ITransactionStorage _transactionStorage;
         _userService.LoadUsers(loadedUsers);
 
         // Initialize other Services
-        IIdGenerator idGenerator = new TransactionIdGenerator();
         _transactionStorage = new FileTransactionStorage(_fileManager);
-        _transactionService = new TransactionService(idGenerator, _transactionStorage);
+        _transactionService = new TransactionService(_transactionStorage);
         _loginManager = new LoginManager(_userService, _fileManager, _transactionService, _transactionStorage);
     }
 

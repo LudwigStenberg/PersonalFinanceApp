@@ -6,12 +6,12 @@ namespace PersonalFinanceApp;
 
 public class AddIncomeCommand : ICommand
 {
-    private readonly TransactionManager _transactionManager;
-    private readonly UserService _userManager;
-    public AddIncomeCommand(TransactionManager transactionManager, UserService userManager)
+    private readonly TransactionService _transactionService;
+    private readonly UserService _userService;
+    public AddIncomeCommand(TransactionService transactionManager, UserService userService)
     {
-        _transactionManager = transactionManager;
-        _userManager = userManager;
+        _transactionService = transactionManager;
+        _userService = userService;
     }
 
 
@@ -22,8 +22,8 @@ public class AddIncomeCommand : ICommand
         Console.WriteLine("== Add Income ==\n");
 
         TransactionInputDTO transactionData = InputHandler.GetTransactionInput();
-        Transaction transaction = _transactionManager.CreateTransaction(transactionData, TransactionType.Income, _userManager.CurrentUser.UserId);
-        _transactionManager.AddTransaction(transaction);
+        Transaction transaction = _transactionService.CreateTransaction(transactionData, TransactionType.Income, _userService.CurrentUser.UserId);
+        _transactionService.AddTransaction(transaction);
 
         ConsoleUI.DisplaySuccess("\nIncome added successfully.");
         Thread.Sleep(2250);

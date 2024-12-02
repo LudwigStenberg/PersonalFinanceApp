@@ -3,13 +3,13 @@
     public class DisplayTransactionsCommand : ICommand
     {
 
-        private readonly TransactionManager _transactionManager;
-        private readonly UserService _userManager;
+        private readonly TransactionService _transactionService;
+        private readonly UserService _userService;
 
-        public DisplayTransactionsCommand(TransactionManager transactionManager, UserService userManager)
+        public DisplayTransactionsCommand(TransactionService transactionService, UserService userService)
         {
-            _transactionManager = transactionManager;
-            _userManager = userManager;
+            _transactionService = transactionService;
+            _userService = userService;
         }
 
         public void Execute()
@@ -20,7 +20,7 @@
             while (true)
             {
                 Console.Clear();
-                TransactionSummary summary = _transactionManager.PrepareTransactionData(timeUnit, _userManager);
+                TransactionSummary summary = _transactionService.PrepareTransactionData(timeUnit, _userService);
 
                 if (viewByTransaction)
                 {
@@ -67,7 +67,7 @@
                     if (indexToRemove != -1)
                     {
                         var transactionToRemove = summary.Transactions[indexToRemove - 1];
-                        bool success = _transactionManager.RemoveTransaction(transactionToRemove, _userManager);
+                        bool success = _transactionService.RemoveTransaction(transactionToRemove, _userService);
                         Console.WriteLine(success ? "Transaction removed successfully." : "Failed to remove transaction.");
                         Thread.Sleep(1250);
                     }
