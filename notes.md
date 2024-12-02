@@ -147,8 +147,24 @@ Saturday, Nov 30
 Changed transaction.cs TransactionId from string to int to match database. Simplicity.
 Started working on DatabaseTransactionStorage's LoadTransactionsAsync.
 
+Sunday, Dec 1
+Implemented SaveTransactionsAsync for DatabaseTransactionStorage.cs
+
+Monday, Dec 2
+Finalized SaveTransactionsAsync for DatabaseTransactionStorage.cs.
+  - Added sql-transaction with transaction object through: BeginTransaction, Commit and Rollback.
+Renamed:
+DatabaseManager    --> DatabaseService
+TransactionManager --> TransactionService
+UserManager        --> UserService
+
+ 
 
 
+
+------------------------------------------------------------------------
+Next TODO:
+Add Transactions for ACID adherence.
 
 
 

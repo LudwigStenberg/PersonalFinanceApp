@@ -5,10 +5,10 @@ namespace PersonalFinanceApp;
 class Program
 {
     private static CommandManager _commandManager;
-    private static UserManager _userManager;
+    private static UserService _userService;
     private static FileManager _fileManager;
-    private static ITransactionStorage _transactionStorage;
-    private static TransactionManager _transactionManager;
+private static ITransactionStorage _transactionStorage;
+    private static TransactionService _transactionService;
     private static LoginManager _loginManager;
 
     static async Task Main(string[] args)
@@ -16,8 +16,8 @@ class Program
         try
         {
             // TESTING
-            // var dbManager = new DatabaseManager();
-            // var user = dbManager.AddUser("testUser2", "hashedPassword");
+            // var dbService = new DatabaseService();
+            // var user = dbService.AddUser("testUser2", "hashedPassword");
             // Console.WriteLine(user != null ? $"User created: {user.UserId}" : "User creation failed");
             // Console.ReadKey();
 
@@ -54,16 +54,16 @@ class Program
             ? loadedUsers.Max(u => (u.UserId))
             : 0;
 
-        // Initialize DatabaseManager and UserManager
-        var _dbManager = new DatabaseManager();
-        _userManager = new UserManager(_dbManager, highestUserId);
-        _userManager.LoadUsers(loadedUsers);
+        // Initialize DatabaseService and UserService
+        var _dbService = new DatabaseService();
+        _userService = new UserService(_dbService, highestUserId);
+        _userService.LoadUsers(loadedUsers);
 
-        // Initialize other managers
+        // Initialize other Services
         IIdGenerator idGenerator = new TransactionIdGenerator();
         _transactionStorage = new FileTransactionStorage(_fileManager);
-        _transactionManager = new TransactionManager(idGenerator, _transactionStorage);
-        _loginManager = new LoginManager(_userManager, _fileManager, _transactionManager, _transactionStorage);
+        _transactionService = new TransactionService(idGenerator, _transactionStorage);
+        _loginManager = new LoginManager(_userService, _fileManager, _transactionService, _transactionStorage);
     }
 
 
@@ -107,16 +107,16 @@ class Program
         {
             try
             {
-                ConsoleUI.DisplayDashboard(_transactionManager);
+                ConsoleUI.DisplayDashboard(_transactionService);
                 Console.WriteLine("\n1.   - Show Transactions");
                 Console.WriteLine("2.   - Add Income");
                 Console.WriteLine("3.   - Add Expense ");
                 Console.WriteLine("4.   - Sign out");
                 Console.WriteLine("Esc. - Exit Program");
 
-                if (_userManager.CurrentUser != null)
+                if (_userService.CurrentUser != null)
                 {
-                    Console.WriteLine($"\nLogged in as: {_userManager.CurrentUser.Username}");
+                    Console.WriteLine($"\nLogged in as: {_userService.CurrentUser.Username}");
                 }
 
                 ConsoleKeyInfo userChoice = Console.ReadKey(true);
@@ -183,24 +183,24 @@ class Program
     {
         _commandManager = new CommandManager();
         _commandManager.RegisterCommand(ConsoleKey.D1,
-            new DisplayTransactionsCommand(_transactionManager, _userManager));
+            new DisplayTransactionsCommand(_transactionService, _userService));
         _commandManager.RegisterCommand(ConsoleKey.D2,
-            new AddIncomeCommand(_transactionManager, _userManager));
+            new AddIncomeCommand(_transactionService, _userService));
         _commandManager.RegisterCommand(ConsoleKey.D3,
-            new AddExpenseCommand(_transactionManager, _userManager));
+            new AddExpenseCommand(_transactionService, _userService));
         _commandManager.RegisterCommand(ConsoleKey.D6,
-            new RemoveTransactionCommand(_transactionManager, _userManager));
+            new RemoveTransactionCommand(_transactionService, _userService));
     }
 
     static async Task SaveAndExit()
     {
-        if (_userManager.CurrentUser != null)
+        if (_userService.CurrentUser != null)
         {
-            int userId = _userManager.CurrentUser.UserId;
-            List<Transaction> transactions = _transactionManager.GetCurrentUserTransactions(userId);
+            int userId = _userService.CurrentUser.UserId;
+            List<Transaction> transactions = _transactionService.GetCurrentUserTransactions(userId);
 
             await _transactionStorage.SaveTransactionsAsync(transactions, userId);
-            await _fileManager.SaveUsersAsync(_userManager);
+            await _fileManager.SaveUsersAsync(_userService);
         }
     }
 }

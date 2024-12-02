@@ -7,8 +7,8 @@ namespace PersonalFinanceApp;
 public class AddIncomeCommand : ICommand
 {
     private readonly TransactionManager _transactionManager;
-    private readonly UserManager _userManager;
-    public AddIncomeCommand(TransactionManager transactionManager, UserManager userManager)
+    private readonly UserService _userManager;
+    public AddIncomeCommand(TransactionManager transactionManager, UserService userManager)
     {
         _transactionManager = transactionManager;
         _userManager = userManager;

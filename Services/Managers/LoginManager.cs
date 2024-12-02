@@ -3,32 +3,32 @@ namespace PersonalFinanceApp;
 
 public class LoginManager
 {
-    private readonly UserManager _userManager;
+    private readonly UserService _userService;
     private readonly FileManager _fileManager;
-    private readonly TransactionManager _transactionManager;
+    private readonly TransactionService _transactionService;
     private readonly ITransactionStorage _transactionStorage;
 
-    public LoginManager(UserManager userManager, FileManager fileManager,
-                       TransactionManager transactionManager, ITransactionStorage transactionStorage)
+    public LoginManager(UserService userService, FileManager FileManager,
+                       TransactionService transactionService, ITransactionStorage transactionStorage)
     {
-        _userManager = userManager;
-        _fileManager = fileManager;
-        _transactionManager = transactionManager;
+        _userService = userService;
+        _fileManager = FileManager;
+        _transactionService = transactionService;
         _transactionStorage = transactionStorage;
     }
 
     public async Task<bool> HandleLogin()
     {
         var (username, password) = InputHandler.GetExistingUserCredentials();
-        if (_userManager.AuthenticateUser(username, password))
+        if (_userService.AuthenticateUser(username, password))
         {
             ConsoleUI.DisplaySuccess("Login successful...");
-            ConsoleUI.WelcomeUser(_userManager);
+            ConsoleUI.WelcomeUser(_userService);
 
             if (await InitializeUserData())
             {
-                Console.WriteLine($"{_transactionManager.GetTransactionCount(_userManager)} transactions loaded for {_userManager.CurrentUser.Username}");
-                if (_transactionManager.GetTransactionCount(_userManager) == 0)
+                Console.WriteLine($"{_transactionService.GetTransactionCount(_userService)} transactions loaded for {_userService.CurrentUser.Username}");
+                if (_transactionService.GetTransactionCount(_userService) == 0)
                 {
                     Console.WriteLine("No transactions found for this user.");
                 }
@@ -49,13 +49,13 @@ public class LoginManager
     public async Task<bool> HandleCreateAccount()
     {
         var (username, password) = InputHandler.GetNewUserCredentials();
-        if (_userManager.CreateAccount(username, password))
+        if (_userService.CreateAccount(username, password))
         {
             try
             {
-                await _fileManager.SaveUsersAsync(_userManager);
+                await _fileManager.SaveUsersAsync(_userService);
                 ConsoleUI.DisplaySuccess("Account creation successful!");
-                ConsoleUI.WelcomeUser(_userManager);
+                ConsoleUI.WelcomeUser(_userService);
                 return true;
             }
             catch (IOException ex)
@@ -77,15 +77,15 @@ public class LoginManager
 
     public async Task<bool> HandleSignOut()
     {
-        if (_userManager.CurrentUser == null)
+        if (_userService.CurrentUser == null)
             return true;
 
-        List<Transaction> transactions = _transactionManager.GetCurrentUserTransactions(_userManager.CurrentUser.UserId);
-        return await _userManager.SignOut(
+        List<Transaction> transactions = _transactionService.GetCurrentUserTransactions(_userService.CurrentUser.UserId);
+        return await _userService.SignOut(
             transactions,
-            _userManager.CurrentUser.UserId,
+            _userService.CurrentUser.UserId,
             _fileManager,
-            _userManager
+            _userService
         );
     }
 
@@ -94,7 +94,7 @@ public class LoginManager
         while (true)
         {
             List<Transaction> loadedTransactions =
-                await _transactionStorage.LoadTransactionsAsync(_userManager.CurrentUser.UserId);
+                await _transactionStorage.LoadTransactionsAsync(_userService.CurrentUser.UserId);
 
             Console.WriteLine($"Loaded {loadedTransactions.Count} transactions.");
 
@@ -110,7 +110,7 @@ public class LoginManager
                 continue;
             }
 
-            _transactionManager.InitializeTransactions(loadedTransactions);
+            _transactionService.InitializeTransactions(loadedTransactions);
             ConsoleUI.DisplaySuccess("Data successfully loaded! Continuing...");
             return true;
         }

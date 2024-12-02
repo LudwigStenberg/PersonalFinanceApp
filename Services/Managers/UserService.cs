@@ -3,16 +3,16 @@ using BCrypt.Net;
 
 namespace PersonalFinanceApp;
 
-public class UserManager
+public class UserService
 {
-    private readonly DatabaseManager _dbManager;
+    private readonly DatabaseService _dbService;
     private Dictionary<string, User> users = new Dictionary<string, User>();
     public int HighestUserId { get; private set; }
     public User CurrentUser { get; private set; }
 
-    public UserManager(DatabaseManager dbManager, int highestUserId)
+    public UserService(DatabaseService dbService, int highestUserId)
     {
-        _dbManager = dbManager;
+        _dbService = dbService;
         HighestUserId = highestUserId;
     }
 
@@ -55,12 +55,12 @@ public class UserManager
     {
         string passwordHashed = BCrypt.Net.BCrypt.HashPassword(password);
 
-        if (_dbManager == null)
+        if (_dbService == null)
         {
-            throw new InvalidOperationException("DatabaseManager (_dbManager) is not initialized.");
+            throw new InvalidOperationException("DatabaseService (_dbService) is not initialized.");
         }
 
-        User newUser = _dbManager.AddUser(username, passwordHashed);
+        User newUser = _dbService.AddUser(username, passwordHashed);
         if (AddNewUser(username, newUser))
         {
             HighestUserId++;
@@ -73,7 +73,7 @@ public class UserManager
     public bool AuthenticateUser(string username, string password)
     {
         // Read user from the DB.
-        User user = _dbManager.GetUserByUsername(username);
+        User user = _dbService.GetUserByUsername(username);
         if (user != null && BCrypt.Net.BCrypt.Verify(password, user.HashedPassword))
         {
             CurrentUser = user;
@@ -86,13 +86,13 @@ public class UserManager
 
 
     public async Task<bool> SignOut(List<Transaction> transactions, int userId,
-                                  FileManager fileManager, UserManager userManager)
+                                  FileManager FileManager, UserService userService)
     {
-        if (!await fileManager.SaveToFileAsync(transactions, userId))
+        if (!await FileManager.SaveToFileAsync(transactions, userId))
         {
             return false;
         }
-        if (!await fileManager.SaveUsersAsync(userManager))
+        if (!await FileManager.SaveUsersAsync(userService))
         {
             return false;
         }

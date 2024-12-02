@@ -4,9 +4,9 @@
     {
 
         private readonly TransactionManager _transactionManager;
-        private readonly UserManager _userManager;
+        private readonly UserService _userManager;
 
-        public DisplayTransactionsCommand(TransactionManager transactionManager, UserManager userManager)
+        public DisplayTransactionsCommand(TransactionManager transactionManager, UserService userManager)
         {
             _transactionManager = transactionManager;
             _userManager = userManager;

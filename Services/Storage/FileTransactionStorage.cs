@@ -4,7 +4,7 @@ public class FileTransactionStorage : ITransactionStorage
 {
     private readonly FileManager _fileManager;
 
-    public FileTransactionStorage(FileManager fileManager)
+    public FileTransactionStorage(fileManager fileManager)
     {
         _fileManager = fileManager;
     }

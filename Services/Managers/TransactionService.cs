@@ -1,13 +1,13 @@
 
 namespace PersonalFinanceApp;
 
-public class TransactionManager : ITransactionOperations
+public class TransactionService : ITransactionOperations
 {
     private readonly IIdGenerator _idGenerator;
     private readonly ITransactionStorage _transactionStorage;
     private List<Transaction> _transactions = new List<Transaction>();
 
-    public TransactionManager(IIdGenerator idGenerator, ITransactionStorage transactionStorage)
+    public TransactionService(IIdGenerator idGenerator, ITransactionStorage transactionStorage)
     {
         _idGenerator = idGenerator;
         _transactionStorage = transactionStorage;

@@ -5,9 +5,9 @@ namespace PersonalFinanceApp;
 public class DatabaseTransactionStorage : ITransactionStorage
 {
 
-    private readonly DatabaseManager _dbManager;
+    private readonly DatabaseService _dbManager;
 
-    public DatabaseTransactionStorage(DatabaseManager dbManager)
+    public DatabaseTransactionStorage(DatabaseService dbManager)
     {
         _dbManager = dbManager;
     }
@@ -69,29 +69,33 @@ public class DatabaseTransactionStorage : ITransactionStorage
         const string sql = @"
             INSERT INTO transactions (date, type, amount, category, description, user_id)
             VALUES (@Date, @Type, @Amount, @Category, @Description, @UserId)
-            ";
+        ";
+
+        using var transaction = await _dbManager.Connection.BeginTransactionAsync();
         try
         {
-            foreach (var transaction in transactions)
+            foreach (var txn in transactions)
             {
                 using var cmd = new NpgsqlCommand(sql, _dbManager.Connection);
-                cmd.Parameters.AddWithValue("@Date", transaction.Date);
-                cmd.Parameters.AddWithValue("@Type", transaction.Type.ToString());
-                cmd.Parameters.AddWithValue("@Amount", transaction.Amount);
-                cmd.Parameters.AddWithValue("@Category", transaction.Category.ToString());
-                cmd.Parameters.AddWithValue("@Description", transaction.Description);
-                cmd.Parameters.AddWithValue("@UserId", transaction.UserId);
+                cmd.Parameters.AddWithValue("@Date", txn.Date);
+                cmd.Parameters.AddWithValue("@Type", txn.Type.ToString());
+                cmd.Parameters.AddWithValue("@Amount", txn.Amount);
+                cmd.Parameters.AddWithValue("@Category", txn.Category.ToString());
+                cmd.Parameters.AddWithValue("@Description", txn.Description ?? ((object)DBNull.Value));
+                cmd.Parameters.AddWithValue("@UserId", txn.UserId);
 
                 await cmd.ExecuteNonQueryAsync(); // Executes the SQL insert command.
             }
 
-            return true; // All transactions saved successfully.
+            await transaction.CommitAsync(); // Commit if all transactions succeed.
+            return true;
 
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving transactions: .{ex.Message}");
-            throw;
+            await transaction.RollbackAsync(); // Rollback on error.
+            Console.WriteLine($"Error saving transaction: {ex.Message}");
+            return false;
         }
     }
 }

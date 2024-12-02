@@ -28,7 +28,7 @@ public class ConsoleUI
 
 
 
-    public static void WelcomeUser(UserManager userManager)
+    public static void WelcomeUser(UserService userManager)
     {
         if (userManager.CurrentUser != null)
         {

@@ -5,9 +5,9 @@ namespace PersonalFinanceApp;
 public class AddExpenseCommand : ICommand
 {
     private readonly TransactionManager _transactionManager;
-    private readonly UserManager _userManager;
+    private readonly UserService _userManager;
 
-    public AddExpenseCommand(TransactionManager transactionManager, UserManager userManager)
+    public AddExpenseCommand(TransactionManager transactionManager, UserService userManager)
     {
         _transactionManager = transactionManager;
         _userManager = userManager;

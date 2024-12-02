@@ -5,9 +5,9 @@ namespace PersonalFinanceApp;
 public class RemoveTransactionCommand : ICommand
 {
     private readonly TransactionManager _transactionManager;
-    private readonly UserManager _userManager;
+    private readonly UserService _userManager;
 
-    public RemoveTransactionCommand(TransactionManager transactionManager, UserManager userManager)
+    public RemoveTransactionCommand(TransactionManager transactionManager, UserService userManager)
     {
         _transactionManager = transactionManager;
         _userManager = userManager;

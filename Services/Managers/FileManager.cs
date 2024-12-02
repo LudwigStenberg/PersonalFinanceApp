@@ -2,7 +2,7 @@
 using System.Text.Json;
 
 namespace PersonalFinanceApp;
-public class FileManager
+public class FileService
 {
     private const string UserDataDir = "UserData";
     private const string UserFile = "users.json";
@@ -62,7 +62,7 @@ public class FileManager
         }
     }
 
-    public async Task<bool> SaveUsersAsync(UserManager userManager)
+    public async Task<bool> SaveUsersAsync(UserService userManager)
     {
         try
         {

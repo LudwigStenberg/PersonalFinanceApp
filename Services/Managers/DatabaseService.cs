@@ -3,7 +3,7 @@ using Npgsql;
 using PersonalFinanceApp;
 
 
-public class DatabaseManager : IDisposable
+public class DatabaseService : IDisposable
 {
     private readonly NpgsqlConnection connection;
 
@@ -44,7 +44,7 @@ public class DatabaseManager : IDisposable
         ";
 
 
-    public DatabaseManager()
+    public DatabaseService()
     {
         try
         {
