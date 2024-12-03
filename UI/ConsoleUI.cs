@@ -3,11 +3,10 @@
 public class ConsoleUI
 {
 
-    public static void DisplayPrompt(string prompt) // Wrapper for Console.Write but it allows for future enhancements. E.g. color, formatting etc.
+    public static void DisplayPrompt(string prompt)
     {
         Console.Write(prompt);
     }
-
 
 
     public static void DisplayError(string message, int sleep = 2000)
@@ -45,17 +44,22 @@ public class ConsoleUI
     }
 
 
-    public static void DisplayDashboard(TransactionService transactionService)
+    public static async Task DisplayDashboard(TransactionService transactionService, int userId)
     {
-        Console.Clear();
-        Console.WriteLine("== Dashboard ==\n");
-        decimal accountBalance = transactionService.GetAccountBalance();
-        Console.WriteLine($"Account balance: {accountBalance:C}");
+        ClearAndWriteLine("== Dashboard ==\n");
+        try
+        {
+            decimal accountBalance = await transactionService.GetAccountBalanceAsync(userId);
+            Console.WriteLine($"Account balance: {accountBalance:C}");
+        }
+        catch (Exception ex)
+        {
+            DisplayError($"Error retrieving account balance: {ex.Message}");
+        }
     }
 
     public static void DisplayTransactionsByIndividual(TransactionSummary summary, bool showIndices = false)
     {
-        // Console.Clear();
         const int padding = 5;
         const int dateWidth = 15;
         const int typeWidth = 12;
@@ -64,9 +68,9 @@ public class ConsoleUI
         const int descriptionWidth = 30;
 
         // Header with padding
-
-        $"{new string(' ', padding)}{"Date",-dateWidth}{"Type",-typeWidth}" +
-        $"{"Amount",-amountWidth}{"Category",-categoryWidth}{"Description",-descriptionWidth}");
+        ClearAndWriteLine(
+            $"{new string(' ', padding)}{"Date",-dateWidth}{"Type",-typeWidth}" +
+            $"{"Amount",-amountWidth}{"Category",-categoryWidth}{"Description",-descriptionWidth}");
 
         int index = 1;
         foreach (var groupKey in summary.GroupedTransactions.Keys.OrderBy(k => k))
@@ -97,6 +101,7 @@ public class ConsoleUI
         Console.WriteLine(new string('=', padding + dateWidth + typeWidth + amountWidth + categoryWidth + descriptionWidth));
         DisplaySummary(summary);
     }
+
 
 
 
@@ -182,8 +187,13 @@ public class ConsoleUI
         }
     }
 
-    public static ConsoleKey DisplayMenuAndGetChoice(string[] options)
+    public static ConsoleKey DisplayMenuAndGetChoice(string[] options, bool clearScreen = true)
     {
+        if (clearScreen)
+        {
+            Console.Clear();
+        }
+
         foreach (var option in options)
         {
             Console.WriteLine(option);

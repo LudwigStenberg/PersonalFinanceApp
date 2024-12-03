@@ -42,7 +42,7 @@ public class DisplayTransactionsCommand : ICommand
                 }
 
                 // Show menu and get user choice.
-                var userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
+                ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
                 {
                     "     View by: [1. Day] [2. Week] [3. Month] [4. Year]",
                     "     [5. Toggle Category/Transaction View]",

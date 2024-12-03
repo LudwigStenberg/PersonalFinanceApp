@@ -13,14 +13,7 @@ class Program
     {
         try
         {
-            // TESTING
-            // var dbService = new DatabaseService();
-            // var user = dbService.AddUser("testUser2", "hashedPassword");
-            // Console.WriteLine(user != null ? $"User created: {user.UserId}" : "User creation failed");
-            // Console.ReadKey();
-
             await Initialize();
-            RegisterCommands();
 
             bool isRunning = true;
             while (isRunning)
@@ -61,18 +54,24 @@ class Program
         _transactionStorage = new FileTransactionStorage(_fileManager);
         _transactionService = new TransactionService(_transactionStorage);
         _loginManager = new LoginManager(_userService, _fileManager, _transactionService, _transactionStorage);
+
+        // Initialize commands
+        _commandManager = new CommandManager();
+        int userId = _userService.CurrentUser.UserId;
+        _commandManager.InitializeCommands(_transactionService, userId);
     }
 
 
     static async Task<bool> RunLoginMenu()
     {
-        Console.Clear();
-        Console.WriteLine("1.   - Sign in");
-        Console.WriteLine("2.   - Create Account");
-        Console.WriteLine("Esc. - Exit Application");
-        ConsoleKeyInfo choice = Console.ReadKey(true);
+        ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
+        {
+            "1.   Sign In",
+            "2.   Create Account",
+            "Esc. Exit Application"
+        });
 
-        switch (choice.Key)
+        switch (userChoice)
         {
             case ConsoleKey.D1:
                 if (await _loginManager.HandleLogin())
@@ -104,26 +103,27 @@ class Program
         {
             try
             {
-                ConsoleUI.DisplayDashboard(_transactionService);
-                Console.WriteLine("\n1.   - Show Transactions");
-                Console.WriteLine("2.   - Add Income");
-                Console.WriteLine("3.   - Add Expense ");
-                Console.WriteLine("4.   - Sign out");
-                Console.WriteLine("Esc. - Exit Program");
+                await ConsoleUI.DisplayDashboard(_transactionService, _userService.CurrentUser.UserId);
+                ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
+                {
+                    "1. Show Transactions",
+                    "2. Add Income",
+                    "3. Add Expense",
+                    "4. Sign Out",
+                    "Esc. Exit Program"
+                 }, false);
 
                 if (_userService.CurrentUser != null)
                 {
                     Console.WriteLine($"\nLogged in as: {_userService.CurrentUser.Username}");
                 }
 
-                ConsoleKeyInfo userChoice = Console.ReadKey(true);
-
-                switch (userChoice.Key)
+                switch (userChoice)
                 {
                     case ConsoleKey.D1:
                     case ConsoleKey.D2:
                     case ConsoleKey.D3:
-                        _commandManager.ExecuteCommand(userChoice.Key);
+                        _commandManager.ExecuteCommand(userChoice);
                         break;
 
                     case ConsoleKey.D4:
@@ -135,7 +135,6 @@ class Program
                         else
                         {
                             ConsoleUI.DisplayError("There was an error while signing out. Some data might not have been saved.");
-
                         }
                         break;
 
@@ -153,7 +152,6 @@ class Program
                             else
                             {
                                 ConsoleUI.DisplayError("Error saving data before exit.");
-
                             }
                         }
                         break;
@@ -176,25 +174,12 @@ class Program
         }
     }
 
-    private static void RegisterCommands() // Move to C.M?
-    {
-        _commandManager = new CommandManager();
-        _commandManager.RegisterCommand(ConsoleKey.D1,
-            new DisplayTransactionsCommand(_transactionService, _userService));
-        _commandManager.RegisterCommand(ConsoleKey.D2,
-            new AddIncomeCommand(_transactionService, _userService));
-        _commandManager.RegisterCommand(ConsoleKey.D3,
-            new AddExpenseCommand(_transactionService, _userService));
-        _commandManager.RegisterCommand(ConsoleKey.D6,
-            new RemoveTransactionCommand(_transactionService, _userService));
-    }
-
     static async Task SaveAndExit()
     {
         if (_userService.CurrentUser != null)
         {
             int userId = _userService.CurrentUser.UserId;
-            List<Transaction> transactions = _transactionService.GetCurrentUserTransactions(userId);
+            List<Transaction> transactions = await _transactionService.GetCurrentUserTransactionsAsync(userId);
 
             await _transactionStorage.SaveTransactionsAsync(transactions, userId);
             await _fileManager.SaveUsersAsync(_userService);

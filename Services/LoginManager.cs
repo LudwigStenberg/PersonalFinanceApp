@@ -8,11 +8,11 @@ public class LoginManager
     private readonly TransactionService _transactionService;
     private readonly ITransactionStorage _transactionStorage;
 
-    public LoginManager(UserService userService, FileManager FileManager,
+    public LoginManager(UserService userService, FileManager fileManager,
                        TransactionService transactionService, ITransactionStorage transactionStorage)
     {
         _userService = userService;
-        _fileManager = FileManager;
+        _fileManager = fileManager;
         _transactionService = transactionService;
         _transactionStorage = transactionStorage;
     }
@@ -27,7 +27,7 @@ public class LoginManager
 
             if (await InitializeUserData())
             {
-                Console.WriteLine($"{_transactionService.GetTransactionCount(_userService)} transactions loaded for {_userService.CurrentUser.Username}");
+                Console.WriteLine($"{_transactionService.GetTransactionCountAsync(_userService.CurrentUser.UserId)} transactions loaded for {_userService.CurrentUser.Username}");
                 if (_transactionService.GetTransactionCount(_userService) == 0)
                 {
                     Console.WriteLine("No transactions found for this user.");

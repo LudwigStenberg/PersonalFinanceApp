@@ -171,21 +171,29 @@ Updated affected components from modifications to TransactionService.cs:
   - Decoupled UserService from AddIncome/ExpenseCommands by only injecting UserId instead of the entire UserService.
 
 Changes to ConsoleUI.cs
-  - Created:
+   Created:
       - ConsoleUI.ClearAndWriteLine()
       - DisplayMenuAndGetChoice():  For use in DisplayTransactionsCommand (and possibly in other places).
       - DisplayToggleViewMessage(): SoC to simplify DisplayTransactionCommand.
       - GetTransactionForRemovalIndex(): Displays transactions with indices for removal and gets user input.
-  - Updated:
+   Updated:
       - ConsoleUI.DisplayError/Success to use Thread.Sleep.
+      - DisplayDashboard()
 
 Updated affected components from modifications to TransactionService.cs:
   - Completely refactored all of the commands. 
   - Decoupled UserService from AddIncome/ExpenseCommands by only injecting UserId instead of the entire UserService.
 
+Changes to Program.cs
+   Updated:
+    - RunMainMenu() to use DisplayMenuAndGetChoice()
+    - RunLoginMenu() to use DisplayMenuAndGetChoice()
+    - Moved RegisterCommands() method to CommandManager and added InitializeCommands() in Program instead: Cleaner Program.
+
+
 
 ===================================================================================
-    
+  
   
 
 
@@ -195,9 +203,7 @@ Updated affected components from modifications to TransactionService.cs:
 
 ===================================================================================
 TODO - NEXT:
-Refactor ConsoleUI to adhere to TransactionService changes.
-Fix Try/Catch error messages to use ConsoleUI.DisplayError()
-
+Refactor LoginManager.
 
 
 

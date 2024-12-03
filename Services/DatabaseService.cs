@@ -55,7 +55,7 @@ public class DatabaseService : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error initializing database: {ex.Message}");
+            ConsoleUI.DisplayError($"Error initializing database: {ex.Message}");
             throw;
         }
     }
@@ -93,7 +93,7 @@ public class DatabaseService : IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during database initialization: {ex.Message}");
+            ConsoleUI.DisplayError($"Error during database initialization: {ex.Message}");
             throw;
         }
     }
@@ -105,12 +105,12 @@ public class DatabaseService : IDisposable
         {
             using var cmd = new NpgsqlCommand(sql, connection);
             cmd.ExecuteNonQuery();
-            Console.WriteLine($"Sucessfully executed SQL: {sql}");
+            ConsoleUI.DisplaySuccess($"Sucessfully executed SQL: {sql}");
 
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error executing SQL: {sql}. Exception: {ex.Message}");
+            ConsoleUI.DisplayError($"Error executing SQL: {sql}. Exception: {ex.Message}");
         }
     }
 
