@@ -1,34 +1,47 @@
-﻿using System.ComponentModel;
-using System.Diagnostics.Metrics;
-using System.Security.Cryptography.X509Certificates;
-
-namespace PersonalFinanceApp;
+﻿namespace PersonalFinanceApp;
 
 public class AddIncomeCommand : ICommand
 {
     private readonly TransactionService _transactionService;
-    private readonly UserService _userService;
-    public AddIncomeCommand(TransactionService transactionManager, UserService userService)
+    private readonly int _userId;
+
+    public AddIncomeCommand(TransactionService transactionService, int userId)
     {
-        _transactionService = transactionManager;
-        _userService = userService;
+        _transactionService = transactionService;
+        _userId = userId;
     }
 
 
-    public void Execute()
+    public async void Execute()
     {
+        try
+        {
+            ConsoleUI.ClearAndWriteLine("== Add Income ==\n");
 
-        Console.Clear();
-        Console.WriteLine("== Add Income ==\n");
+            // Gather input from user.
+            TransactionInputDTO transactionData = InputHandler.GetTransactionInput();
 
-        TransactionInputDTO transactionData = InputHandler.GetTransactionInput();
-        Transaction transaction = _transactionService.CreateTransaction(transactionData, TransactionType.Income, _userService.CurrentUser.UserId);
-        _transactionService.AddTransaction(transaction);
+            // Create transaction object.
+            Transaction transaction = _transactionService.CreateTransaction(
+                transactionData,
+                TransactionType.Income,
+                _userId
+                );
 
-        ConsoleUI.DisplaySuccess("\nIncome added successfully.");
-        Thread.Sleep(2250);
+            bool success = await _transactionService.AddTransactionAsync(transaction, _userId);
 
+            if (success)
+            {
+                ConsoleUI.DisplaySuccess("Income added successfully");
+            }
+            else
+            {
+                ConsoleUI.DisplayError("Failed to add income.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ConsoleUI.DisplayError($"Error adding income: {ex.Message}");
+        }
     }
-
-
 }

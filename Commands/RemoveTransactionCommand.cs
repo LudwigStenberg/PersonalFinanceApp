@@ -5,38 +5,50 @@ namespace PersonalFinanceApp;
 public class RemoveTransactionCommand : ICommand
 {
     private readonly TransactionService _transactionService;
-    private readonly UserService _userService;
+    private readonly int _userId;
 
-    public RemoveTransactionCommand(TransactionService transactionService, UserService userService)
+    public RemoveTransactionCommand(TransactionService transactionService, int userId)
     {
         _transactionService = transactionService;
-        _userService = userService;
+        _userId = userId;
     }
 
-    public void Execute()
+    public async void Execute()
     {
-        // Get current transactions
-        var summary = _transactionService.PrepareTransactionData("Day", _userService);
-
-        // Display transactions with indices
-        ConsoleUI.DisplayTransactionsByIndividual(summary, true);
-
-        // Get valid index from user
-        int index = InputHandler.GetTransactionIndex(summary.Transactions.Count);
-        if (index == -1) return; // User cancelled
-
-        // Remove the transaction
-        Transaction transactionToRemove = summary.Transactions[index - 1];
-        if (_transactionService.RemoveTransaction(transactionToRemove, _userService))
+        try
         {
-            ConsoleUI.DisplaySuccess("Transaction removed successfully.");
-        }
-        else
-        {
-            ConsoleUI.DisplayError("Failed to remove transaction.");
-        }
+            // Fetch and display transactions for the user.
+            var summary = await _transactionService.PrepareTransactionDataAsync("Day", _userId);
 
-        Console.WriteLine("Press any key to continue...");
-        Console.ReadKey();
+            if (summary.Transactions.Count == 0)
+            {
+                ConsoleUI.DisplayError($"No transactions to remove.");
+                return;
+            }
+
+            ConsoleUI.ClearAndWriteLine("== Remove Transaction ==\n");
+            ConsoleUI.DisplayTransactionsByIndividual(summary, showIndices: true);
+
+            // Get the transaction index from the user.
+            int index = InputHandler.GetTransactionIndex(summary.Transactions.Count);
+            if (index == -1) return;
+
+            // Identify and remove the transaction.
+            Transaction transactionToRemove = summary.Transactions[index - 1];
+            bool success = await _transactionService.RemoveTransactionAsync(transactionToRemove, _userId);
+
+            if (success)
+            {
+                ConsoleUI.DisplaySuccess($"Transaction removed successfully.");
+            }
+            else
+            {
+                ConsoleUI.DisplayError($"Failed to remove transaction.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ConsoleUI.DisplayError($"Error during transaction removal: {ex.Message}");
+        }
     }
 }

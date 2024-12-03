@@ -1,30 +1,46 @@
-﻿using System.ComponentModel;
-
-namespace PersonalFinanceApp;
+﻿namespace PersonalFinanceApp;
 
 public class AddExpenseCommand : ICommand
 {
     private readonly TransactionService _transactionService;
-    private readonly UserService _userService;
+    private readonly int _userId;
 
-    public AddExpenseCommand(TransactionService transactionService, UserService userService)
+    public AddExpenseCommand(TransactionService transactionService, int userId)
     {
         _transactionService = transactionService;
-        _userService = userService;
+        _userId = userId;
     }
 
-    public void Execute()
+    public async void Execute()
     {
-        Console.Clear();
-        Console.WriteLine("Add Expense\n");
+        try
+        {
+            ConsoleUI.ClearAndWriteLine("== Add Expense ==\n");
 
-        TransactionInputDTO transactionData = InputHandler.GetTransactionInput();
-        Transaction transaction = _transactionService.CreateTransaction(transactionData, TransactionType.Expense, _userService.CurrentUser.UserId);
-        _transactionService.AddTransaction(transaction);
-        ConsoleUI.DisplaySuccess("Expense added successfully.");
+            // Gather input for the transaction.
+            TransactionInputDTO transactionData = InputHandler.GetTransactionInput();
 
-        Console.ReadKey();
+            // Create a new Transaction object.
+            Transaction transaction = _transactionService.CreateTransaction(
+                 transactionData,
+                 TransactionType.Expense,
+                _userId
+                );
 
+            bool success = await _transactionService.AddTransactionAsync(transaction, _userId);
 
+            if (success)
+            {
+                ConsoleUI.DisplaySuccess("Expense added successfully");
+            }
+            else
+            {
+                ConsoleUI.DisplayError("Failed to add expense.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ConsoleUI.DisplayError($"Error adding expense: {ex.Message}");
+        }
     }
 }
