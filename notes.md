@@ -166,14 +166,17 @@ UserService        --> UserService
 
 ------------------------------------------------------------------------
 Tuesday, Dec 3
+Removed ITransactionOperations - Replaced by combining ITransactionStorage and TransactionService.
 
-
-
-
-
-
-
-
+Refactor TransactionService to use ITransactionStorage:
+  Removed:
+  in-memory _transactions list.
+  InitializeTransactions() as the functionality is handled by LoadTransactionsAsync().
+  Fixed:
+  - AddTransactionAsync()
+  - RemoveTransactionAsync()
+  - PrepareTransactionsAsync()
+  - CalculateTotalsAsync()
 
 
 
@@ -205,4 +208,4 @@ TODO:
 - Check SQLTransactions ACID. Rollback()
 - check out vertical slice architecture for folder/file structure
 - Do I need the transactionId in Transaction.cs constructor?
-- Should I remove ITransactionOperations?
+- Introduce/generate UUID?

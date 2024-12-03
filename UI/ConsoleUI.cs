@@ -28,11 +28,11 @@ public class ConsoleUI
 
 
 
-    public static void WelcomeUser(UserService UserService)
+    public static void WelcomeUser(UserService userService)
     {
-        if (UserService.CurrentUser != null)
+        if (userService.CurrentUser != null)
         {
-            Console.WriteLine($"\nGood to see you, {UserService.CurrentUser.Username}!");
+            Console.WriteLine($"\nGood to see you, {userService.CurrentUser.Username}!");
             Thread.Sleep(1500);
         }
     }
