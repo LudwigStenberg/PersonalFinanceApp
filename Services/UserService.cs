@@ -34,7 +34,6 @@ public class UserService
             : 0;
     }
 
-
     public bool AddNewUser(string username, User newUser)
     {
         if (newUser == null || username == null || string.IsNullOrWhiteSpace(username))
@@ -85,19 +84,19 @@ public class UserService
     }
 
 
-    public async Task<bool> SignOut(List<Transaction> transactions, int userId,
-                                  FileManager FileManager, UserService userService)
+    public async Task<bool> SignOut()
     {
-        if (!await FileManager.SaveToFileAsync(transactions, userId))
+        try
         {
+            // Reset the current user session.
+            CurrentUser = null;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during sign-out: {ex.Message}");
             return false;
         }
-        if (!await FileManager.SaveUsersAsync(userService))
-        {
-            return false;
-        }
-
-        CurrentUser = null;
-        return true;
     }
+
 }

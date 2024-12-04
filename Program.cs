@@ -25,13 +25,14 @@ class Program
         }
         catch (ArgumentException ex)
         {
-            Console.WriteLine($"Input error: {ex.Message}");
+            Console.WriteLine($"Input error: {ex}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An unexpected error occurred: {ex.Message}");
+            Console.WriteLine($"An unexpected error occurred: {ex}");
         }
     }
+
 
 
     static async Task Initialize()
@@ -53,12 +54,10 @@ class Program
         // Initialize other Services
         _transactionStorage = new FileTransactionStorage(_fileManager);
         _transactionService = new TransactionService(_transactionStorage);
-        _loginManager = new LoginManager(_userService, _fileManager, _transactionService, _transactionStorage);
+        _loginManager = new LoginManager(_userService, _fileManager, _commandManager, _transactionService, _transactionStorage);
 
-        // Initialize commands
+        // Initialize
         _commandManager = new CommandManager();
-        int userId = _userService.CurrentUser.UserId;
-        _commandManager.InitializeCommands(_transactionService, userId);
     }
 
 
@@ -99,6 +98,10 @@ class Program
     static async Task RunMainMenu()
     {
         bool userSignedIn = true;
+
+        // Ensure commands are initialized
+        _commandManager.InitializeCommands(_transactionService, _userService.CurrentUser.UserId);
+
         while (userSignedIn)
         {
             try
@@ -106,24 +109,19 @@ class Program
                 await ConsoleUI.DisplayDashboard(_transactionService, _userService.CurrentUser.UserId);
                 ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
                 {
-                    "1. Show Transactions",
-                    "2. Add Income",
-                    "3. Add Expense",
-                    "4. Sign Out",
-                    "Esc. Exit Program"
-                 }, false);
-
-                if (_userService.CurrentUser != null)
-                {
-                    Console.WriteLine($"\nLogged in as: {_userService.CurrentUser.Username}");
-                }
+                "1. Show Transactions",
+                "2. Add Income",
+                "3. Add Expense",
+                "4. Sign Out",
+                "Esc. Exit Program"
+            }, false);
 
                 switch (userChoice)
                 {
                     case ConsoleKey.D1:
                     case ConsoleKey.D2:
                     case ConsoleKey.D3:
-                        _commandManager.ExecuteCommand(userChoice);
+                        await _commandManager.ExecuteCommand(userChoice);
                         break;
 
                     case ConsoleKey.D4:
@@ -134,25 +132,17 @@ class Program
                         }
                         else
                         {
-                            ConsoleUI.DisplayError("There was an error while signing out. Some data might not have been saved.");
+                            ConsoleUI.DisplayError("Error while signing out.");
                         }
                         break;
 
                     case ConsoleKey.Escape:
-                        Console.WriteLine("\nAre you sure you want to exit the program? (Y/N)");
+                        Console.WriteLine("Are you sure you want to exit? (Y/N)");
                         if (Console.ReadKey(true).Key == ConsoleKey.Y)
                         {
-                            if (await _loginManager.HandleSignOut())
-                            {
-                                await SaveAndExit();
-                                ConsoleUI.DisplaySuccess("All data saved. Goodbye!");
-                                Thread.Sleep(2500);
-                                Environment.Exit(0);
-                            }
-                            else
-                            {
-                                ConsoleUI.DisplayError("Error saving data before exit.");
-                            }
+                            await SaveAndExit();
+                            ConsoleUI.DisplaySuccess("All data saved. Goodbye!");
+                            Environment.Exit(0);
                         }
                         break;
 
@@ -161,18 +151,14 @@ class Program
                         break;
                 }
             }
-            catch (IOException ex)
-            {
-                ConsoleUI.DisplayError($"File operation error: {ex.Message}");
-                await SaveAndExit();
-            }
             catch (Exception ex)
             {
                 ConsoleUI.DisplayError($"An unexpected error occurred: {ex.Message}");
-                await SaveAndExit();
             }
         }
     }
+
+
 
     static async Task SaveAndExit()
     {

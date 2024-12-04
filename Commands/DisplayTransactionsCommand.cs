@@ -7,11 +7,11 @@ public class DisplayTransactionsCommand : ICommand
 
     public DisplayTransactionsCommand(TransactionService transactionService, int userId)
     {
-        _transactionService = transactionService;
-        _userId = userId;
+        _transactionService = transactionService ?? throw new ArgumentNullException(nameof(transactionService));
+        _userId = userId > 0 ? userId : throw new ArgumentException("User ID must be positive.", nameof(userId));
     }
 
-    public async void Execute()
+    public async Task Execute()
     {
         bool viewByTransaction = true; // Default to viewing transactions individually.
         string timeUnit = "Month";     // Default time unit.

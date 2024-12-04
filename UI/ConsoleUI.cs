@@ -9,7 +9,7 @@ public class ConsoleUI
     }
 
 
-    public static void DisplayError(string message, int sleep = 2000)
+    public static void DisplayError(string message, int sleep = 1500)
     {
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine(message);
@@ -19,7 +19,7 @@ public class ConsoleUI
 
 
 
-    public static void DisplaySuccess(string message, int delayMs = 2000)
+    public static void DisplaySuccess(string message, int delayMs = 1500)
     {
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine(message);
@@ -31,22 +31,21 @@ public class ConsoleUI
     {
         Console.Clear();
         Console.WriteLine(message);
-        Console.WriteLine(delayMs);
+        Thread.Sleep(delayMs);
     }
 
-    public static void WelcomeUser(UserService userService)
+    public static void WelcomeUser(string username)
     {
-        if (userService.CurrentUser != null)
+        if (!string.IsNullOrWhiteSpace(username))
         {
-            Console.WriteLine($"\nGood to see you, {userService.CurrentUser.Username}!");
-            Thread.Sleep(1500);
+            DisplaySuccess($"\nGood to see you, {username}!");
         }
     }
 
 
     public static async Task DisplayDashboard(TransactionService transactionService, int userId)
     {
-        ClearAndWriteLine("== Dashboard ==\n");
+        ClearAndWriteLine($"== Dashboard ==\nLogged in as User: {userId}");
         try
         {
             decimal accountBalance = await transactionService.GetAccountBalanceAsync(userId);
@@ -152,8 +151,7 @@ public class ConsoleUI
 
     public static void DisplayCategories()
     {
-        Console.Clear();
-        Console.WriteLine("== Categories ==\n");
+        ConsoleUI.ClearAndWriteLine("== Categories ==\n");
 
         List<string> categories = new List<string>();
 
@@ -204,8 +202,8 @@ public class ConsoleUI
     public static void DisplayToggleViewMessage(bool viewByTransaction)
     {
         ClearAndWriteLine(viewByTransaction
-        ? "Switching to Transaction View..."
-        : "Switching to category View...", 2000);
+            ? "Switching to Transaction View..."
+            : "Switching to category View...", 2000);
     }
 
     public static int GetTransactionRemovalIndex(TransactionSummary summary)
@@ -216,10 +214,3 @@ public class ConsoleUI
 
 
 }
-
-
-
-
-
-
-

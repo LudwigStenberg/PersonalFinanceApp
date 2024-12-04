@@ -7,12 +7,12 @@ public class AddIncomeCommand : ICommand
 
     public AddIncomeCommand(TransactionService transactionService, int userId)
     {
-        _transactionService = transactionService;
-        _userId = userId;
+        _transactionService = transactionService ?? throw new ArgumentNullException(nameof(transactionService));
+        _userId = userId > 0 ? userId : throw new ArgumentException("User ID must be positive.", nameof(userId));
     }
 
 
-    public async void Execute()
+    public async Task Execute()
     {
         try
         {

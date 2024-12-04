@@ -18,21 +18,59 @@ public class CommandManager
         _commands[key] = command;
     }
 
+    // public void InitializeCommands(TransactionService transactionService, int userId)
+    // {
+    //     RegisterCommand(ConsoleKey.D1, new DisplayTransactionsCommand(transactionService, userId));
+    //     RegisterCommand(ConsoleKey.D2, new AddIncomeCommand(transactionService, userId));
+    //     RegisterCommand(ConsoleKey.D3, new AddExpenseCommand(transactionService, userId));
+    //     RegisterCommand(ConsoleKey.D6, new RemoveTransactionCommand(transactionService, userId));
+    // }
+
     public void InitializeCommands(TransactionService transactionService, int userId)
     {
-        RegisterCommand(ConsoleKey.D1, new DisplayTransactionsCommand(transactionService, userId));
-        RegisterCommand(ConsoleKey.D2, new AddIncomeCommand(transactionService, userId));
-        RegisterCommand(ConsoleKey.D3, new AddExpenseCommand(transactionService, userId));
-        RegisterCommand(ConsoleKey.D6, new RemoveTransactionCommand(transactionService, userId));
+        try
+        {
+            RegisterCommand(ConsoleKey.D1, new DisplayTransactionsCommand(transactionService, userId));
+            Console.WriteLine("[DEBUG] D1 command registered successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG] Failed to register D1: {ex.Message}");
+        }
+
+        try
+        {
+            RegisterCommand(ConsoleKey.D2, new AddIncomeCommand(transactionService, userId));
+            Console.WriteLine("[DEBUG] D2 command registered successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG] Failed to register D2: {ex.Message}");
+        }
+
+        try
+        {
+            RegisterCommand(ConsoleKey.D3, new AddExpenseCommand(transactionService, userId));
+            Console.WriteLine("[DEBUG] D3 command registered successfully.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DEBUG] Failed to register D3: {ex.Message}");
+        }
     }
 
-    public bool ExecuteCommand(ConsoleKey key)
+
+
+    public async Task ExecuteCommand(ConsoleKey key)
     {
-        if (_commands.TryGetValue(key, out ICommand command))
+        if (_commands.TryGetValue(key, out var command))
         {
-            command.Execute();
-            return true;
+            await command.Execute();
         }
-        return false;
+        else
+        {
+            ConsoleUI.DisplayError("Invalid command.");
+        }
     }
+
 }

@@ -1,6 +1,6 @@
 ﻿namespace PersonalFinanceApp;
 
-public class FileTransactionStorage : ITransactionStorage
+public class FileTransactionStorage
 {
     private readonly FileManager _fileManager;
 

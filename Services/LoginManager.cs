@@ -5,14 +5,17 @@ public class LoginManager
 {
     private readonly UserService _userService;
     private readonly FileManager _fileManager;
+    private readonly CommandManager _commandManager;
     private readonly TransactionService _transactionService;
     private readonly ITransactionStorage _transactionStorage;
 
-    public LoginManager(UserService userService, FileManager fileManager,
+
+    public LoginManager(UserService userService, FileManager fileManager, CommandManager commandManager,
                        TransactionService transactionService, ITransactionStorage transactionStorage)
     {
         _userService = userService;
         _fileManager = fileManager;
+        _commandManager = commandManager;
         _transactionService = transactionService;
         _transactionStorage = transactionStorage;
     }
@@ -20,15 +23,26 @@ public class LoginManager
     public async Task<bool> HandleLogin()
     {
         var (username, password) = InputHandler.GetExistingUserCredentials();
+
+        // Authenticate the user using UserService.
         if (_userService.AuthenticateUser(username, password))
         {
             ConsoleUI.DisplaySuccess("Login successful...");
-            ConsoleUI.WelcomeUser(_userService);
+            ConsoleUI.WelcomeUser(username);
 
+            if (_userService.CurrentUser == null)
+            {
+                ConsoleUI.DisplayError("User authentication succeeded, but CurrentUser is not set.");
+                return false;
+            }
+
+            // Attempt to initialize user data.
             if (await InitializeUserData())
             {
-                Console.WriteLine($"{_transactionService.GetTransactionCountAsync(_userService.CurrentUser.UserId)} transactions loaded for {_userService.CurrentUser.Username}");
-                if (_transactionService.GetTransactionCount(_userService) == 0)
+                int transactionCount = await _transactionService.GetTransactionCountAsync(_userService.CurrentUser.UserId);
+                Console.WriteLine($"{transactionCount} transactions loaded for {username}");
+
+                if (transactionCount == 0)
                 {
                     Console.WriteLine("No transactions found for this user.");
                 }
@@ -37,14 +51,16 @@ public class LoginManager
             else
             {
                 ConsoleUI.DisplayError("Failed to load user data. Some features may be unavailable.");
-                return true;
+                return true; // Allow user to proceed despite initialization issues.
             }
         }
 
+        // Authentication failed.
         ConsoleUI.DisplayError("Login failed. Username or Password is incorrect.");
-        Thread.Sleep(1500);
         return false;
     }
+
+
 
     public async Task<bool> HandleCreateAccount()
     {
@@ -55,7 +71,7 @@ public class LoginManager
             {
                 await _fileManager.SaveUsersAsync(_userService);
                 ConsoleUI.DisplaySuccess("Account creation successful!");
-                ConsoleUI.WelcomeUser(_userService);
+                ConsoleUI.WelcomeUser(username);
                 return true;
             }
             catch (IOException ex)
@@ -71,16 +87,19 @@ public class LoginManager
         }
 
         ConsoleUI.DisplayError("Account creation failed.");
-        Thread.Sleep(1500);
         return false;
     }
+
+
 
     public async Task<bool> HandleSignOut()
     {
         if (_userService.CurrentUser == null)
+        {
             return true;
+        }
 
-        List<Transaction> transactions = _transactionService.GetCurrentUserTransactions(_userService.CurrentUser.UserId);
+        List<Transaction> transactions = await _transactionService.GetCurrentUserTransactionsAsync(_userService.CurrentUser.UserId);
         return await _userService.SignOut(
             transactions,
             _userService.CurrentUser.UserId,
@@ -91,28 +110,31 @@ public class LoginManager
 
     private async Task<bool> InitializeUserData()
     {
-        while (true)
+        int retryCount = 3;
+        while (retryCount > 0)
         {
             List<Transaction> loadedTransactions =
                 await _transactionStorage.LoadTransactionsAsync(_userService.CurrentUser.UserId);
 
             Console.WriteLine($"Loaded {loadedTransactions.Count} transactions.");
 
-            if (loadedTransactions.Count == 0)
+            if (loadedTransactions.Count > 0)
             {
-                if (!InputHandler.GetRetryChoice())
-                {
-                    return false;
-                }
-                Console.Clear();
-                Console.WriteLine("Re-trying...");
-                Thread.Sleep(1000);
-                continue;
+                ConsoleUI.DisplaySuccess("Data successfully loaded! Continuing...");
+                return true;
             }
 
-            _transactionService.InitializeTransactions(loadedTransactions);
-            ConsoleUI.DisplaySuccess("Data successfully loaded! Continuing...");
-            return true;
+            if (!InputHandler.GetRetryChoice())
+            {
+                return false;
+            }
+
+            retryCount--;
+            ConsoleUI.ClearAndWriteLine("Re-trying...", 1250);
         }
+
+        ConsoleUI.DisplayError("Failed to load data after multiple attempts.");
+        return false;
     }
+
 }
