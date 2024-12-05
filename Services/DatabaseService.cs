@@ -20,29 +20,18 @@ public class DatabaseService : IDisposable
             user_id SERIAL PRIMARY KEY,
             username VARCHAR(50) UNIQUE NOT NULL,
             password_hashed TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-        )";
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL)";
 
     private const string CreateTransactionsTableSql = @"
-        CREATE TABLE IF NOT EXISTS transactions (
+            CREATE TABLE IF NOT EXISTS transactions (
             transaction_id SERIAL PRIMARY KEY,
-            user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
-            type transaction_type_enum NOT NULL,
+            user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+            date DATE NOT NULL,
             amount DECIMAL(10, 2) NOT NULL,
-            date TIMESTAMP(0) DEFAULT CURRENT_TIMESTAMP(0),
-            category VARCHAR(25) NOT NULL,
-            description VARCHAR(50)
-        )";
-
-    private const string CreateTypeEnumSql = @"
-        DO $$
-        BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transaction_type_enum') THEN
-                CREATE TYPE transaction_type_enum AS ENUM ('Income', 'Expense');
-            END IF;
-        END $$;
-        ";
-
+            type TEXT NOT NULL CHECK (type IN ('Income', 'Expense')),
+            category TEXT NOT NULL,
+            custom_category_name VARCHAR(20),
+            description VARCHAR(50))";
 
     public DatabaseService()
     {
@@ -82,14 +71,10 @@ public class DatabaseService : IDisposable
             Console.WriteLine("Creating users table...");
             ExecuteNonQuery(CreateUsersTableSql);
 
-            Console.WriteLine("Creating transaction type enum...");
-            ExecuteNonQuery(CreateTypeEnumSql);
-
-            Console.WriteLine("Creating transactions table...");
+            Console.WriteLine("\nCreating transactions table...");
             ExecuteNonQuery(CreateTransactionsTableSql);
 
             Console.WriteLine("Database initialization completed sucessfully.");
-
         }
         catch (Exception ex)
         {
@@ -144,6 +129,38 @@ public class DatabaseService : IDisposable
         }
 
         return null;
+    }
+
+    public List<User> GetAllUsers()
+    {
+        string sql = @"
+        SELECT user_id, username, password_hashed
+        FROM users
+    ";
+
+        var users = new List<User>();
+
+        try
+        {
+            using var cmd = new NpgsqlCommand(sql, Connection);
+
+            using var reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                users.Add(new User(
+                    userId: reader.GetInt32(0),
+                    username: reader.GetString(1),
+                    hashedPassword: reader.GetString(2)
+                ));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching all users: {ex.Message}");
+        }
+
+        return users;
     }
 
 

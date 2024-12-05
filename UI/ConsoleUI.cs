@@ -9,7 +9,7 @@ public class ConsoleUI
     }
 
 
-    public static void DisplayError(string message, int sleep = 1500)
+    public static void DisplayError(string message, int sleep = 2000)
     {
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine(message);
@@ -19,7 +19,7 @@ public class ConsoleUI
 
 
 
-    public static void DisplaySuccess(string message, int delayMs = 1500)
+    public static void DisplaySuccess(string message, int delayMs = 2000)
     {
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine(message);
@@ -145,7 +145,6 @@ public class ConsoleUI
         Console.WriteLine(new string('=', 99));
 
     }
-
 
 
 

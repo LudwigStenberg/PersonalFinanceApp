@@ -7,13 +7,12 @@ class Program
     private static UserService _userService;
     private static LoginManager _loginManager;
     private static CommandManager _commandManager;
-    private static FileManager _fileManager;
 
     static async Task Main(string[] args)
     {
         try
         {
-            await Initialize();
+            Initialize();
 
             bool isRunning = true;
             while (isRunning)
@@ -21,11 +20,7 @@ class Program
                 isRunning = await RunLoginMenu();
             }
 
-            await SaveAndExit();
-        }
-        catch (ArgumentException ex)
-        {
-            Console.WriteLine($"Input error: {ex}");
+            Console.WriteLine("Goodbye!");
         }
         catch (Exception ex)
         {
@@ -35,28 +30,14 @@ class Program
 
 
 
-    static async Task Initialize()
+
+    static void Initialize()
     {
-        _fileManager = new FileManager();
-        _fileManager.EnsureUserDataDirectoryExists();
-
-        // Load users and calculate the highest UserId
-        List<User> loadedUsers = await _fileManager.LoadUsersAsync();
-        int highestUserId = loadedUsers.Count > 0
-            ? loadedUsers.Max(u => (u.UserId))
-            : 0;
-
-        // Initialize DatabaseService and UserService
         var _dbService = new DatabaseService();
-        _userService = new UserService(_dbService, highestUserId);
-        _userService.LoadUsers(loadedUsers);
-
-        // Initialize other Services
-        _transactionStorage = new FileTransactionStorage(_fileManager);
+        _userService = new UserService(_dbService);
+        _transactionStorage = new DatabaseTransactionStorage(_dbService);
         _transactionService = new TransactionService(_transactionStorage);
-        _loginManager = new LoginManager(_userService, _fileManager, _commandManager, _transactionService, _transactionStorage);
-
-        // Initialize
+        _loginManager = new LoginManager(_userService, _commandManager, _transactionService, _transactionStorage);
         _commandManager = new CommandManager();
     }
 
@@ -79,7 +60,7 @@ class Program
                 }
                 break;
             case ConsoleKey.D2:
-                if (await _loginManager.HandleCreateAccount())
+                if (_loginManager.HandleCreateAccount())
                 {
                     await RunMainMenu();
                 }
@@ -88,7 +69,6 @@ class Program
                 return false;
             default:
                 ConsoleUI.DisplayError("Invalid input.");
-                Thread.Sleep(1500);
                 break;
         }
 
@@ -109,12 +89,12 @@ class Program
                 await ConsoleUI.DisplayDashboard(_transactionService, _userService.CurrentUser.UserId);
                 ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
                 {
-                "1. Show Transactions",
-                "2. Add Income",
-                "3. Add Expense",
-                "4. Sign Out",
-                "Esc. Exit Program"
-            }, false);
+                    "1. Show Transactions",
+                    "2. Add Income",
+                    "3. Add Expense",
+                    "4. Sign Out",
+                    "Esc. Exit Program"
+                }, false);
 
                 switch (userChoice)
                 {
@@ -125,7 +105,7 @@ class Program
                         break;
 
                     case ConsoleKey.D4:
-                        if (await _loginManager.HandleSignOut())
+                        if (_loginManager.HandleSignOut())
                         {
                             ConsoleUI.DisplaySuccess("Successfully signed out.");
                             return;
@@ -140,8 +120,6 @@ class Program
                         Console.WriteLine("Are you sure you want to exit? (Y/N)");
                         if (Console.ReadKey(true).Key == ConsoleKey.Y)
                         {
-                            await SaveAndExit();
-                            ConsoleUI.DisplaySuccess("All data saved. Goodbye!");
                             Environment.Exit(0);
                         }
                         break;
@@ -155,20 +133,6 @@ class Program
             {
                 ConsoleUI.DisplayError($"An unexpected error occurred: {ex.Message}");
             }
-        }
-    }
-
-
-
-    static async Task SaveAndExit()
-    {
-        if (_userService.CurrentUser != null)
-        {
-            int userId = _userService.CurrentUser.UserId;
-            List<Transaction> transactions = await _transactionService.GetCurrentUserTransactionsAsync(userId);
-
-            await _transactionStorage.SaveTransactionsAsync(transactions, userId);
-            await _fileManager.SaveUsersAsync(_userService);
         }
     }
 }

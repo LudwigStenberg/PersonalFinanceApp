@@ -17,13 +17,13 @@ public class TransactionService
     /// <summary>
     /// Adds a new transaction for the specified user.
     /// </summary>
+    /// 
     public async Task<bool> AddTransactionAsync(Transaction transaction, int userId)
     {
         try
         {
-            List<Transaction> transactions = await _transactionStorage.LoadTransactionsAsync(userId);
-            transactions.Add(transaction);
-            return await _transactionStorage.SaveTransactionsAsync(transactions, userId);
+            // Save only the new transaction
+            return await _transactionStorage.SaveTransactionsAsync(new List<Transaction> { transaction }, userId);
         }
         catch (Exception ex)
         {
@@ -31,6 +31,21 @@ public class TransactionService
             return false;
         }
     }
+
+    // public async Task<bool> AddTransactionAsync(Transaction transaction, int userId)
+    // {
+    //     try
+    //     {
+    //         List<Transaction> transactions = await _transactionStorage.LoadTransactionsAsync(userId);
+    //         transactions.Add(transaction);
+    //         return await _transactionStorage.SaveTransactionsAsync(transactions, userId);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Error adding transaction for User {userId}: {ex.Message}");
+    //         return false;
+    //     }
+    // }
 
     /// <summary>
     /// Removes an existing transaction for the specified user.
@@ -221,7 +236,7 @@ public class TransactionService
     /// </summary>
     public Transaction CreateTransaction(TransactionInputDTO dto, TransactionType type, int userId)
     {
-        return new Transaction(dto.Date, type, dto.Amount, dto.Category, dto.Description, userId)
+        return new Transaction(dto.Date, type, dto.Amount, dto.Category, dto.CustomCategoryName, dto.Description, userId)
         {
             CustomCategoryName = dto.CustomCategoryName
         };

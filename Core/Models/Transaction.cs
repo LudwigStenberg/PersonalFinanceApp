@@ -13,25 +13,27 @@ public class Transaction
 
     // Constructor for transactions retrieved from the database (with TransactionId).
     public Transaction(int transactionId, DateTime date, TransactionType type, decimal amount,
-                       TransactionCategory category, string description, int userId)
+                       TransactionCategory category, string customCategoryName, string description, int userId)
     {
         TransactionId = transactionId;
         Date = date;
         Type = type;
         Amount = amount;
         Category = category;
+        CustomCategoryName = customCategoryName;
         Description = description;
         UserId = userId;
     }
 
     // Constructor for new transactions (without TransactionId).
     public Transaction(DateTime date, TransactionType type, decimal amount,
-                       TransactionCategory category, string description, int userId)
+                       TransactionCategory category, string customCategoryName, string description, int userId)
     {
         Date = date;
         Type = type;
         Amount = amount;
         Category = category;
+        CustomCategoryName = customCategoryName;
         Description = description;
         UserId = userId;
     }

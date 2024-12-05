@@ -205,6 +205,34 @@ Disabled FileStorage part of the program for now
 Removed ITransactionStorage implementation from FileTransactionStorage (for now)
 Removed file saving features of SignOut() - now only resets: CurrentUser = null.
 
+=========================================================
+THURSDAY, DECEMBER 5
+
+Updated HandleSignOut() to align with SignOut().
+Updated HandleCreateAccount() to not include file operations.
+Completely removed FileManager.cs and references.
+Refactored and updated LoginManager.
+Removed SaveAndExit() from Program.cs - was being used for file-saving.
+SQL: Changed from custom enum type column to TEXT with CHECK for simplicity --> updated CreateTransactionsTableSql()
+Removed FileTransactionStorage.
+Removed ITransactionUIOperations.
+
+=========================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 =========================================================
 TESTING & DEBUGGING
@@ -215,7 +243,10 @@ TESTING & DEBUGGING
 =========================================================
 TODO - NEXT:
 Remove all the dependencies on FileManager and file storing operations (FileTransactionStorage).
-
+REMOVE:
+[DEBUG] D1 command registered successfully.
+[DEBUG] D2 command registered successfully.
+[DEBUG] D3 command registered successfully.
 
 
 
