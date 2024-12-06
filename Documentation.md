@@ -123,33 +123,32 @@ Improved DatabaseManager class:
 =========================================================
 SATURDAY, NOVEMBER 30
 
-Changed transaction.cs TransactionId from string to int to match database. Simplicity.
-Started working on DatabaseTransactionStorage's LoadTransactionsAsync.
+- Changed transaction.cs TransactionId from string to int to match database. Simplicity.
+-  working on DatabaseTransactionStorage's LoadTransactionsAsync.
 
 =========================================================
 SUNDAY, DECEMBER 1
 
-Implemented SaveTransactionsAsync for DatabaseTransactionStorage.cs
+- Implemented SaveTransactionsAsync for DatabaseTransactionStorage.cs
 
 =========================================================
 MONDAY, DECEMBER 2
 
-Finalized SaveTransactionsAsync for DatabaseTransactionStorage.cs.
+- Finalized SaveTransactionsAsync for DatabaseTransactionStorage.cs.
   - Added sql-transaction with transaction object through: BeginTransaction, Commit and Rollback.
-Renamed:ler ?
-
-DatabaseManager    --> DatabaseService
-TransactionManager --> TransactionService
-UserService        --> UserService
+Renamed:
+- DatabaseManager    --> DatabaseService
+- TransactionManager --> TransactionService
+- UserService        --> UserService
 
  Removed IIdGenerator.cs and TransactionIdGenerator (SERIAL for now).
 
 =========================================================
 TUESDAY, DECEMBER 3
 
-Removed ITransactionOperations - Replaced by combining ITransactionStorage and TransactionService.
+- Removed ITransactionOperations - Replaced by combining ITransactionStorage and TransactionService.
 
-Refactor TransactionService to use ITransactionStorage:
+- Refactor TransactionService to use ITransactionStorage:
   Removed:
     - in-memory _transactions list.
     - InitializeTransactions() as the functionality is handled by LoadTransactionsAsync().
@@ -194,43 +193,48 @@ Changes to Program.cs
 
 =========================================================
 WEDNESDAY, DECEMBER 4
-Updated LoginManager to work with the new TransactionService.
-Added a new constructor to Transaction.cs for excluding TransactionId.
+- Updated LoginManager to work with the new TransactionService.
+- Added a new constructor to Transaction.cs for excluding TransactionId.
   
-Disabled FileStorage part of the program for now
+- Disabled FileStorage part of the program for now
   Reason: Due to overreaching with my refactoring in preparation for database-integration 
           without sufficient testing there were multiple issues with the current combination
           of FileStorage and DatabaseStorage.
 
-Removed ITransactionStorage implementation from FileTransactionStorage (for now)
-Removed file saving features of SignOut() - now only resets: CurrentUser = null.
+- Removed ITransactionStorage implementation from FileTransactionStorage (for now)
+- Removed file saving features of SignOut() - now only resets: CurrentUser = null.
 
 =========================================================
 THURSDAY, DECEMBER 5
 
-Updated HandleSignOut() to align with SignOut().
-Updated HandleCreateAccount() to not include file operations.
-Completely removed FileManager.cs and references.
-Refactored and updated LoginManager.
-Removed SaveAndExit() from Program.cs - was being used for file-saving.
-SQL: Changed from custom enum type column to TEXT with CHECK for simplicity --> updated CreateTransactionsTableSql()
-Removed FileTransactionStorage.
-Removed ITransactionUIOperations.
+- Updated HandleSignOut() to align with SignOut().
+- Updated HandleCreateAccount() to not include file operations.
+- Completely removed FileManager.cs and references.
+- Refactored and updated LoginManager.
+- Removed SaveAndExit() from Program.cs - was being used for file-saving.
+- SQL: Changed from custom enum type column to TEXT with CHECK for simplicity --> updated CreateTransactionsTableSql()
+- Removed FileTransactionStorage.
+- Removed ITransactionUIOperations.
+
 
 =========================================================
+FRIDAY, DECEMBER 6
 
+- Switched time-based in-memory logic to SQL logic for:
+- PrepareTransactionDataAsync() renamed --> GetGroupedTransactionsAsync().
+- Changed TransactionSummary's dictionary (GroupedTransactions) to be of 
+  type DateTime instead of string.
+- Updated FormatGroupKey to work with change above and also recreated it into a switch-expression 
+- based on different timeUnits.
 
-
-
-
-
-
-
-
-
-
-
-
+- Removed outdated PrepareTransactionDataAsync logic and replaced it with a new SQL-based approach in 
+  GetGroupedTransactionsAsync.
+- Implemented dynamic SQL GROUP BY queries to handle grouping of transactions by Day, Week, Month, and Year.
+- Ensured TransactionSummary is populated with both GroupedTransactions and a flat Transactions list 
+  for consistent handling in the UI.
+- Debugged and enhanced DisplayTransactionsByIndividual using existing TransactionDateHelper methods,
+  ensuring group keys are formatted correctly based on the selected time unit.
+- Tested and confirmed functionality for transaction grouping, display, and summaries.
 
 
 
@@ -239,16 +243,15 @@ TESTING & DEBUGGING
   To remove:
     Commands: constructor checks
     CommandManager: Logging around each command.
+    [DEBUG] D1 command registered successfully.
+    [DEBUG] D2 command registered successfully.
+    [DEBUG] D3 command registered successfully.
 
 =========================================================
 TODO - NEXT:
-Remove all the dependencies on FileManager and file storing operations (FileTransactionStorage).
-REMOVE:
-[DEBUG] D1 command registered successfully.
-[DEBUG] D2 command registered successfully.
-[DEBUG] D3 command registered successfully.
-
-
+- Verify SQL JOIN:
+    Review the code for opportunities to use SQL JOIN where multiple tables are involved 
+    (e.g., linking transactions to user accounts).
 
 =========================================================
 TODO - FULL:
@@ -261,3 +264,21 @@ TODO - FULL:
 - check out vertical slice architecture for folder/file structure
 - Do I need the transactionId in Transaction.cs constructor?
 - Introduce/generate UUID?
+
+- Implement SQL Transactions:
+    At least two SQL transactions need to be added. For example:
+        Batch insertion or deletion of transactions.
+        Account deletion cascading through user data.
+
+- Check RemoveTransactionCommand, implement SQL command for it.
+
+- Test for Edge Cases:
+    Ensure robust behavior for:
+        Empty transaction lists.
+        Invalid input or database states.
+        Large datasets.
+
+- Final Review and Cleanup:
+
+    Ensure redundant or unused code is removed.
+    Double-check for consistent UI and error handling.

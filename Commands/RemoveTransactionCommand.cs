@@ -1,7 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace PersonalFinanceApp;
-
+﻿namespace PersonalFinanceApp;
 public class RemoveTransactionCommand : ICommand
 {
     private readonly TransactionService _transactionService;
@@ -18,9 +15,9 @@ public class RemoveTransactionCommand : ICommand
         try
         {
             // Fetch and display transactions for the user.
-            var summary = await _transactionService.PrepareTransactionDataAsync("Day", _userId);
+            var summary = await _transactionService.GetGroupedTransactionsAsync("Day", _userId);
 
-            if (summary.Transactions.Count == 0)
+            if (summary.GroupedTransactions.Count == 0)
             {
                 ConsoleUI.DisplayError($"No transactions to remove.");
                 return;
@@ -30,11 +27,12 @@ public class RemoveTransactionCommand : ICommand
             ConsoleUI.DisplayTransactionsByIndividual(summary, showIndices: true);
 
             // Get the transaction index from the user.
-            int index = InputHandler.GetTransactionIndex(summary.Transactions.Count);
+            int index = InputHandler.GetTransactionIndex(summary.GroupedTransactions.Count);
             if (index == -1) return;
 
             // Identify and remove the transaction.
-            Transaction transactionToRemove = summary.Transactions[index - 1];
+            var transactionToRemove = summary.Transactions[index - 1];
+
             bool success = await _transactionService.RemoveTransactionAsync(transactionToRemove, _userId);
 
             if (success)

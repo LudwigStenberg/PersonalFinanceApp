@@ -45,7 +45,8 @@ public class ConsoleUI
 
     public static async Task DisplayDashboard(TransactionService transactionService, int userId)
     {
-        ClearAndWriteLine($"== Dashboard ==\nLogged in as User: {userId}");
+        ClearAndWriteLine($"== DASHBOARD ==");
+        Console.WriteLine($"Logged in as User: {userId}");
         try
         {
             decimal accountBalance = await transactionService.GetAccountBalanceAsync(userId);
@@ -67,17 +68,17 @@ public class ConsoleUI
         const int descriptionWidth = 30;
 
         // Header with padding
-        ClearAndWriteLine(
+        Console.WriteLine(
             $"{new string(' ', padding)}{"Date",-dateWidth}{"Type",-typeWidth}" +
             $"{"Amount",-amountWidth}{"Category",-categoryWidth}{"Description",-descriptionWidth}");
 
         int index = 1;
         foreach (var groupKey in summary.GroupedTransactions.Keys.OrderBy(k => k))
         {
-            string displayKey = TransactionDateHelper.FormatGroupKey(groupKey, summary.TimeUnit);
+            string displayKey = TransactionDateHelper.GetGroupKey(groupKey, summary.TimeUnit);
 
             Console.WriteLine(new string('=', padding + dateWidth + typeWidth + amountWidth + categoryWidth + descriptionWidth));
-            Console.WriteLine($"{new string(' ', padding)}{displayKey}\n");
+            Console.WriteLine($"{new string(' ', padding)}[{displayKey}]\n");
 
 
             foreach (var transaction in summary.GroupedTransactions[groupKey])
@@ -104,6 +105,9 @@ public class ConsoleUI
 
 
 
+
+
+
     public static void DisplayTransactionsByCategory(TransactionSummary summary)
     {
         var categorizedTransactions = summary.Transactions
@@ -124,8 +128,8 @@ public class ConsoleUI
 
             Console.WriteLine($"  Total for {category.Key}: {categoryTotal,10:C}");
 
-            DisplaySummary(summary);
         }
+        DisplaySummary(summary);
     }
 
 
@@ -138,9 +142,9 @@ public class ConsoleUI
             return;
         }
 
-        Console.WriteLine("\n     == Summary ==\n");
+        Console.WriteLine("      [SUMMARY]\n");
         Console.WriteLine($"     Total Income:    {summary.TotalIncome,15:C}\tNumber of transactions: {summary.Transactions.Count}");
-        Console.WriteLine($"     Total Expenses:  {summary.TotalExpenses,15:C}\tCurrent view: {summary.TimeUnit}");
+        Console.WriteLine($"     Total Expenses:  {summary.TotalExpense,15:C}\tCurrent view: {summary.TimeUnit}");
         Console.WriteLine($"     Net Result:      {summary.NetResult,15:C}\tCurrent date range: {summary.Transactions.Min(t => t.Date):yyyy-MM-dd} to {summary.Transactions.Max(t => t.Date):yyyy-MM-dd}");
         Console.WriteLine(new string('=', 99));
 
@@ -150,7 +154,7 @@ public class ConsoleUI
 
     public static void DisplayCategories()
     {
-        ConsoleUI.ClearAndWriteLine("== Categories ==\n");
+        ClearAndWriteLine("[CATEGORIES]\n");
 
         List<string> categories = new List<string>();
 
@@ -210,6 +214,4 @@ public class ConsoleUI
         DisplayTransactionsByIndividual(summary, true);
         return InputHandler.GetTransactionIndex(summary.Transactions.Count);
     }
-
-
 }

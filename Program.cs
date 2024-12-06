@@ -36,7 +36,7 @@ class Program
         var _dbService = new DatabaseService();
         _userService = new UserService(_dbService);
         _transactionStorage = new DatabaseTransactionStorage(_dbService);
-        _transactionService = new TransactionService(_transactionStorage);
+        _transactionService = new TransactionService(_transactionStorage, _dbService);
         _loginManager = new LoginManager(_userService, _commandManager, _transactionService, _transactionStorage);
         _commandManager = new CommandManager();
     }
@@ -68,7 +68,7 @@ class Program
             case ConsoleKey.Escape:
                 return false;
             default:
-                ConsoleUI.DisplayError("Invalid input.");
+                ConsoleUI.DisplayError("Invalid input.", 800);
                 break;
         }
 

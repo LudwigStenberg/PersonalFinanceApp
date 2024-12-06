@@ -20,12 +20,12 @@ public class DisplayTransactionsCommand : ICommand
         {
             try
             {
-                ConsoleUI.ClearAndWriteLine("== Display Transactions ==\n");
+                ConsoleUI.ClearAndWriteLine("     [TRANSACTIONS]\n");
 
                 // Fetch and prepare transaction data.
-                var summary = await _transactionService.PrepareTransactionDataAsync(timeUnit, _userId);
+                var summary = await _transactionService.GetGroupedTransactionsAsync(timeUnit, _userId);
 
-                if (summary.Transactions.Count == 0)
+                if (summary.GroupedTransactions.Count == 0)
                 {
                     ConsoleUI.DisplayError("No transactions to display.");
                     return;
@@ -42,17 +42,31 @@ public class DisplayTransactionsCommand : ICommand
                 }
 
                 // Show menu and get user choice.
+                // ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
+                // {
+                //     "    - View By -",
+                //     "    [1] - Day      [5] - Toggle by Transaction/Category",
+                //     "    [2] - Week     [6] - Remove Transaction",
+                //     "    [3] - Month    [Esc]  - Go Back",
+                //     "    [4] - Year",
+                // }, false);
+
                 ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
-                {
-                    "     View by: [1. Day] [2. Week] [3. Month] [4. Year]",
-                    "     [5. Toggle Category/Transaction View]",
-                    "     [6. Remove Transaction]",
-                    "     [Esc. Go Back]"
-                });
+{
+                    "    - View By -",
+                    "    [1] - Day",
+                    "    [2] - Week",
+                    "    [3] - Month",
+                    "    [4] - Year",
+                    "    -----------",
+                    "    [5] - Toggle by Transaction/Category",
+                    "    [6] - Remove Transaction",
+                    "    [Esc]  - Go Back",
+                }, false);
 
                 if (userChoice == ConsoleKey.Escape)
                 {
-                    return; // Exit the menu.
+                    return;
                 }
 
                 // Handle time unit selection.

@@ -2,7 +2,7 @@
 
 public class GroupedTransactions
 {
-    public string GroupKey { get; set; }
+    public DateTime GroupKey { get; set; }
     public string TimeUnit { get; set; }
     public List<Transaction> Transactions { get; set; }
     public Dictionary<object, decimal> IncomesByCategory { get; set; }
@@ -13,7 +13,7 @@ public class GroupedTransactions
     public decimal NetResult { get; set; }
 
 
-    public GroupedTransactions(string groupKey, string timeUnit)
+    public GroupedTransactions(DateTime groupKey, string timeUnit)
     {
         GroupKey = groupKey;
         TimeUnit = timeUnit;
