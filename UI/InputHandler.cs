@@ -49,7 +49,6 @@ public class InputHandler
 
 
 
-
     public static (string username, string password) GetExistingUserCredentials()
     {
         Console.Clear();
@@ -213,7 +212,6 @@ public class InputHandler
     }
 
 
-
     public static int GetTransactionIndex(int maxIndex)
     {
         while (true)
@@ -246,17 +244,24 @@ public class InputHandler
         return key.Key == exitKey;
     }
 
+    public static bool CheckForReturn(ConsoleKey userChoice)
+    {
+        if (userChoice == ConsoleKey.Escape)
+        {
+            return true;
+        }
+
+        return false;
+    }
 
 
-
-    // Might modularize: Currently long, but imo, clear method - This handles only user input and returns DTO - does not need UserId etc. like Transaction.cs 
     public static TransactionInputDTO GetTransactionInput()
     {
         // Amount validation
         decimal amount;
         while (true)
         {
-            amount = InputHandler.GetValidatedDecimalInput("Enter amount: ");
+            amount = GetValidatedDecimalInput("Enter amount: ");
             if (amount <= 0)
             {
                 ConsoleUI.DisplayError("Amount must be greater than 0.");
@@ -380,9 +385,8 @@ public class InputHandler
 
 
 
-    public static string GetValidatedStringInput(string prompt)
+    public static string GetValidatedStringInput(string prompt, int charLimit = 30)
     {
-
         while (true)
         {
             ConsoleUI.DisplayPrompt(prompt);
@@ -390,19 +394,18 @@ public class InputHandler
 
             if (string.IsNullOrWhiteSpace(input))
             {
-                return "N/A";
+                return null;
             }
 
-            if (input.Length > 50)
+            if (input.Length > charLimit)
             {
-                ConsoleUI.DisplayError("Input can be no longer than 30 characters.");
+                ConsoleUI.DisplayError($"Input can be no longer than {charLimit} characters.");
             }
             else
             {
                 return input;
             }
         }
-
     }
 
 
@@ -445,20 +448,4 @@ public class InputHandler
         }
     }
 
-
-
-    public static bool GetRetryChoice() // Do I need this method? SRP?
-    {
-        Console.WriteLine("The file could not be loaded. Is the file missing?");
-        Console.WriteLine("Would you like to retry?\n1. Yes\n2. No");
-
-        if (!byte.TryParse(Console.ReadLine(), out byte choice))
-        {
-            Console.WriteLine("Invalid input, try again.");
-            Thread.Sleep(1500);
-            return false;
-        }
-
-        return choice == 1;
-    }
 }

@@ -1,10 +1,10 @@
 ﻿namespace PersonalFinanceApp;
-public class RemoveTransactionCommand : ICommand
+public class DeleteTransactionCommand : ICommand
 {
     private readonly TransactionService _transactionService;
     private readonly int _userId;
 
-    public RemoveTransactionCommand(TransactionService transactionService, int userId)
+    public DeleteTransactionCommand(TransactionService transactionService, int userId)
     {
         _transactionService = transactionService ?? throw new ArgumentNullException(nameof(transactionService));
         _userId = userId > 0 ? userId : throw new ArgumentException("User ID must be positive.", nameof(userId));
@@ -34,7 +34,7 @@ public class RemoveTransactionCommand : ICommand
             Transaction transactionToRemove = summary.Transactions[index - 1];
             int transactionId = transactionToRemove.TransactionId;
 
-            bool success = await _transactionService.RemoveTransactionAsync(transactionId);
+            bool success = await _transactionService.DeleteTransactionAsync(transactionId);
 
             if (success)
             {

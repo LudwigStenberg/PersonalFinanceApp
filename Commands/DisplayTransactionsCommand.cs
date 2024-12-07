@@ -7,8 +7,8 @@ public class DisplayTransactionsCommand : ICommand
 
     public DisplayTransactionsCommand(TransactionService transactionService, int userId)
     {
-        _transactionService = transactionService ?? throw new ArgumentNullException(nameof(transactionService));
-        _userId = userId > 0 ? userId : throw new ArgumentException("User ID must be positive.", nameof(userId));
+        _transactionService = transactionService;
+        _userId = userId;
     }
 
     public async Task Execute()
@@ -41,35 +41,21 @@ public class DisplayTransactionsCommand : ICommand
                     ConsoleUI.DisplayTransactionsByCategory(summary);
                 }
 
-                // Show menu and get user choice.
-                // ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
-                // {
-                //     "    - View By -",
-                //     "    [1] - Day      [5] - Toggle by Transaction/Category",
-                //     "    [2] - Week     [6] - Remove Transaction",
-                //     "    [3] - Month    [Esc]  - Go Back",
-                //     "    [4] - Year",
-                // }, false);
+                ConsoleKey userChoice = ConsoleUI.DisplayTextAndGetChoice(new[]
+                {
+                "    View By: [1] Day [2] Week [3] Month [4] Year",
+                "    [5]   -  Toggle by Transaction/Category",
+                "    [6]   -  Delete single transaction",
+                "    [7]   -  Delete multiple transactions",
+                "    [Esc] -  Go Back",
+            }, false);
 
-                ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
-{
-                    "    - View By -",
-                    "    [1] - Day",
-                    "    [2] - Week",
-                    "    [3] - Month",
-                    "    [4] - Year",
-                    "    -----------",
-                    "    [5] - Toggle by Transaction/Category",
-                    "    [6] - Remove Transaction",
-                    "    [Esc]  - Go Back",
-                }, false);
-
-                if (userChoice == ConsoleKey.Escape)
+                if (InputHandler.CheckForReturn(userChoice))
                 {
                     return;
                 }
 
-                // Handle time unit selection.
+                // Handle time unit changes.
                 timeUnit = userChoice switch
                 {
                     ConsoleKey.D1 => "Day",
@@ -86,20 +72,16 @@ public class DisplayTransactionsCommand : ICommand
                     ConsoleUI.DisplayToggleViewMessage(viewByTransaction);
                 }
 
-                // Handle transaction removal.
+                var _commandManager = new CommandManager();
+
                 if (userChoice == ConsoleKey.D6)
                 {
-                    int indexToRemove = ConsoleUI.GetTransactionRemovalIndex(summary);
-                    if (indexToRemove != -1)
-                    {
-                        var transactionToRemove = summary.Transactions[indexToRemove - 1];
-                        int transactionId = transactionToRemove.TransactionId;
 
-                        bool success = await _transactionService.RemoveTransactionAsync(transactionId);
-                        ConsoleUI.DisplaySuccess(success
-                            ? "Transaction removed successfully."
-                            : "Failed to remove transaction.");
-                    }
+                    _commandManager.TryExecuteCommand(userChoice);
+                }
+                else if (userChoice == ConsoleKey.D7)
+                {
+                    _commandManager.TryExecuteCommand(userChoice);
                 }
             }
             catch (Exception ex)
@@ -109,4 +91,5 @@ public class DisplayTransactionsCommand : ICommand
             }
         }
     }
+
 }

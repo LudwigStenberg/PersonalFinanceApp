@@ -238,27 +238,43 @@ FRIDAY, DECEMBER 6
 
 =========================================================
 SATURDAY, DECEMBER 7
-Removed InitializeUserData and merged it into HandleLogin
-Created UserTransactionDataDTO 
-Created wrapper methods
+  
+  Removed InitializeUserData and merged it into HandleLogin
+  
+  Created UserTransactionDataDTO 
+  
+  Created wrapper methods for data retrieval:
+      - GetUserTransactionDataAsync()   --> retrieves and caches transaction data for a user.
+      - GetCurrentUserTransactionData() --> provides direct access to cached data so that.
+            - Previously, methods like GetTransactionCount(), RemoveTransactionAsync() called
+            on LoadTransactionsAsync to retrieve from the database. These have been refactored 
+            to use the cached data instead.
+  
+  Updated methods to work with the cached data to reduce the number of database queries.
+      - GetOrderedTransactions
+      - CalculateTotals
+      - GetAccountBalance
 
+  Created: DeleteTransactionsCommand for batch deletion based on criteria e.g., category or date range (uses sql tx).
+     - Renamed RemoveTransactionCommand --> DeleteTransactionCommand for single deletion.
+  
+  Refactored Command Handling:
+    Integrated DeleteTransactionCommand and DeleteTransactionsCommand into DisplayTransactionsCommand instead of the main menu.
 
-=========================================================
-=========================================================
+  Updated CommandManager:
+    Registered new commands (DeleteTransactionCommand and DeleteTransactionsCommand).
+    Removed transaction deletion commands from the main menu logic.
+
+  Improved User Experience:
+    Enhanced menu display in DisplayTransactionsCommand with options for single and batch deletion.
+    Added robust validation and confirmation prompts for deletion actions.
+
 =========================================================
 TESTING & DEBUGGING
-  To remove:
-    Commands: constructor checks
-    CommandManager: Logging around each command.
-    [DEBUG] D1 command registered successfully.
-    [DEBUG] D2 command registered successfully.
-    [DEBUG] D3 command registered successfully.
-
+Fix main menu commands from being used during transaction view. Check Program, DisplayTransactionsCommand and CommandManager.
 =========================================================
 TODO - NEXT:
-- Verify SQL JOIN:
-    Review the code for opportunities to use SQL JOIN where multiple tables are involved 
-    (e.g., linking transactions to user accounts).
+
 
 =========================================================
 TODO - FULL:
@@ -277,7 +293,7 @@ TODO - FULL:
         Batch insertion or deletion of transactions.
         Account deletion cascading through user data.
 
-- Check RemoveTransactionCommand, implement SQL command for it.
+- Check DeleteTransactionCommand, implement SQL command for it.
 
 - Test for Edge Cases:
     Ensure robust behavior for:
@@ -289,3 +305,5 @@ TODO - FULL:
 
     Ensure redundant or unused code is removed.
     Double-check for consistent UI and error handling.
+
+- Check if InputHandler.CheckForExit is redundant and if I can use CheckForReturn instead.

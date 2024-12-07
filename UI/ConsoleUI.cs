@@ -43,22 +43,48 @@ public class ConsoleUI
     }
 
 
-    public static void DisplayDashboard(TransactionService transactionService, int userId)
+    public static void DisplayMainMenu(TransactionService transactionService)
     {
-        ClearAndWriteLine($"== DASHBOARD ==");
         try
         {
-            var userTransactionData = transactionService.GetCurrentUserTransactionData();
-            Console.WriteLine($"Hello, {userTransactionData.Username}!");
-
+            UserTransactionDataDTO userTransactionData = transactionService.GetCurrentUserTransactionData();
             decimal accountBalance = transactionService.GetAccountBalance();
-            Console.WriteLine($"Account balance: {accountBalance:C}");
+
+            ClearAndWriteLine(
+            $"""
+            ┏━━━━━━━━━━━━━━━━ DASHBOARD ━━━━━━━━━━━━━━━━━━━┓
+            ┃                                              ┃
+            ┃       [1]   -  Show Transactions             ┃  
+            ┃       [2]   -  Add Income                    ┃  
+            ┃       [3]   -  Add Expense                   ┃   
+            ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+            ┃       [6]   -  Sign Out                      ┃  
+            ┃       [Esc] -  Exit Program                  ┃  
+            ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+            Hello, {userTransactionData.Username}!       
+            Account Balance: {accountBalance:C}  
+            """);
         }
         catch (Exception ex)
         {
             DisplayError($"Error retrieving account balance: {ex.Message}");
         }
     }
+
+    public static void DisplayLoginMenu()
+    {
+        ClearAndWriteLine(
+        $"""
+        ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+        ┃             PERSONAL FINANCE APP             ┃ 
+        ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+        ┃       [1]    - Sign In                       ┃
+        ┃       [2]    - Create Account                ┃
+        ┃       [Esc]  - Exit Application              ┃
+        ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+        """);
+    }
+
 
     public static void DisplayTransactionsByIndividual(TransactionSummary summary, bool showIndices = false)
     {
@@ -186,7 +212,7 @@ public class ConsoleUI
         }
     }
 
-    public static ConsoleKey DisplayMenuAndGetChoice(string[] options, bool clearScreen = true)
+    public static ConsoleKey DisplayTextAndGetChoice(string[] options, bool clearScreen = true)
     {
         if (clearScreen)
         {
@@ -212,4 +238,17 @@ public class ConsoleUI
         DisplayTransactionsByIndividual(summary, true);
         return InputHandler.GetTransactionIndex(summary.Transactions.Count);
     }
+
+    public static bool GetConfirmation(string message)
+    {
+        var userChoice = DisplayTextAndGetChoice(new[]
+        {
+        message,
+        "[1] Yes",
+        "[2] No, cancel."
+    });
+
+        return userChoice == ConsoleKey.D1;
+    }
+
 }

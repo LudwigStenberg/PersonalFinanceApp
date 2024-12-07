@@ -1,6 +1,5 @@
 using System.Data;
 using Npgsql;
-using Npgsql.Internal;
 
 namespace PersonalFinanceApp;
 
@@ -41,7 +40,7 @@ public class TransactionService
     /// <summary>
     /// Removes an existing transaction for the specified user.
     /// </summary>
-    public async Task<bool> RemoveTransactionAsync(int transactionId)
+    public async Task<bool> DeleteTransactionAsync(int transactionId)
     {
         try
         {
@@ -73,6 +72,42 @@ public class TransactionService
 
 
 
+    public async Task<bool> DeleteTransactionsAsync(List<int> transactionIds)
+    {
+        if (transactionIds == null || transactionIds.Count == 0)
+        {
+            Console.WriteLine("No transactions to delete.");
+            return false;
+        }
+
+        const string deleteSql = "DELETE FROM transactions WHERE transaction_id = @TransactionId";
+
+        using var transaction = await _dbService.Connection.BeginTransactionAsync();
+        try
+        {
+            foreach (var id in transactionIds)
+            {
+                using var cmd = new NpgsqlCommand(deleteSql, _dbService.Connection, transaction);
+                cmd.Parameters.AddWithValue("@TransactionId", id);
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await transaction.CommitAsync();
+            Console.WriteLine("Transactions deleted successfully.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            Console.WriteLine($"Error deleting transactions: {ex.Message}");
+            return false;
+        }
+    }
+
+
+
+
+
     // ===================================================================================
     //                                  Utility Methods
     // ===================================================================================
@@ -95,28 +130,6 @@ public class TransactionService
         return _currentUserTransactionData;
     }
 
-
-    /// <summary>
-    /// Gets the count of all transactions for the specified user.
-    /// </summary>
-    /// REMOVE? summary has its own counter.
-    // public int GetTransactionCount()
-    // {
-    //     try
-    //     {
-    //         UserTransactionDataDTO userData = GetCurrentUserTransactionData();
-    //         return userData.Transactions.Count;
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Console.WriteLine($"Error getting transaction count: {ex.Message}");
-    //         return 0;
-    //     }
-    // }
-
-    /// <summary>
-    /// Retrieves all transactions for the user, ordered by date (ascending).
-    /// </summary>
     public List<Transaction> GetOrderedTransactions()
     {
         try
@@ -294,5 +307,39 @@ public class TransactionService
         {
             CustomCategoryName = dto.CustomCategoryName
         };
+    }
+
+    public async Task<bool> DeleteTransactionsByCategoryAsync(string categoryName)
+    {
+        var userData = GetCurrentUserTransactionData();
+        var transactionIds = userData.Transactions
+            .Where(t => t.Category.ToString().Equals(categoryName, StringComparison.OrdinalIgnoreCase))
+            .Select(t => t.TransactionId)
+            .ToList();
+
+        if (transactionIds.Count == 0)
+        {
+            ConsoleUI.DisplayError($"No transactions found for category: {categoryName}");
+            return false;
+        }
+
+        return await DeleteTransactionsAsync(transactionIds);
+    }
+
+    public async Task<bool> DeleteTransactionsByDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        var userData = GetCurrentUserTransactionData();
+        var transactionIds = userData.Transactions
+            .Where(t => t.Date >= startDate && t.Date <= endDate)
+            .Select(t => t.TransactionId)
+            .ToList();
+
+        if (transactionIds.Count == 0)
+        {
+            ConsoleUI.DisplayError($"No transactions found in the specified date range.");
+            return false;
+        }
+
+        return await DeleteTransactionsAsync(transactionIds);
     }
 }

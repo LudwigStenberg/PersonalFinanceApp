@@ -44,12 +44,8 @@ class Program
 
     static async Task<bool> RunLoginMenu()
     {
-        ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
-        {
-            "1.   Sign In",
-            "2.   Create Account",
-            "Esc. Exit Application"
-        });
+        ConsoleUI.DisplayLoginMenu();
+        ConsoleKey userChoice = Console.ReadKey(true).Key;
 
         switch (userChoice)
         {
@@ -86,25 +82,18 @@ class Program
         {
             try
             {
-                ConsoleUI.DisplayDashboard(_transactionService, _userService.CurrentUser.UserId);
-                ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
-                {
-                    "1. Show Transactions",
-                    "2. Add Income",
-                    "3. Add Expense",
-                    "4. Sign Out",
-                    "Esc. Exit Program"
-                }, false);
+                ConsoleUI.DisplayMainMenu(_transactionService);
+                ConsoleKey userChoice = Console.ReadKey().Key;
 
                 switch (userChoice)
                 {
                     case ConsoleKey.D1:
                     case ConsoleKey.D2:
                     case ConsoleKey.D3:
-                        _commandManager.ExecuteCommand(userChoice);
+                        _commandManager.TryExecuteCommand(userChoice);
                         break;
 
-                    case ConsoleKey.D4:
+                    case ConsoleKey.D6:
                         if (_loginManager.HandleSignOut())
                         {
                             ConsoleUI.DisplaySuccess("Successfully signed out.");
