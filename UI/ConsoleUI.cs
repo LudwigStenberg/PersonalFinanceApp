@@ -43,13 +43,15 @@ public class ConsoleUI
     }
 
 
-    public static async Task DisplayDashboard(TransactionService transactionService, int userId)
+    public static void DisplayDashboard(TransactionService transactionService, int userId)
     {
         ClearAndWriteLine($"== DASHBOARD ==");
-        Console.WriteLine($"Logged in as User: {userId}");
         try
         {
-            decimal accountBalance = await transactionService.GetAccountBalanceAsync(userId);
+            var userTransactionData = transactionService.GetCurrentUserTransactionData();
+            Console.WriteLine($"Hello, {userTransactionData.Username}!");
+
+            decimal accountBalance = transactionService.GetAccountBalance();
             Console.WriteLine($"Account balance: {accountBalance:C}");
         }
         catch (Exception ex)
@@ -104,10 +106,6 @@ public class ConsoleUI
 
 
 
-
-
-
-
     public static void DisplayTransactionsByCategory(TransactionSummary summary)
     {
         var categorizedTransactions = summary.Transactions
@@ -142,7 +140,7 @@ public class ConsoleUI
             return;
         }
 
-        Console.WriteLine("      [SUMMARY]\n");
+        Console.WriteLine("     [SUMMARY]\n");
         Console.WriteLine($"     Total Income:    {summary.TotalIncome,15:C}\tNumber of transactions: {summary.Transactions.Count}");
         Console.WriteLine($"     Total Expenses:  {summary.TotalExpense,15:C}\tCurrent view: {summary.TimeUnit}");
         Console.WriteLine($"     Net Result:      {summary.NetResult,15:C}\tCurrent date range: {summary.Transactions.Min(t => t.Date):yyyy-MM-dd} to {summary.Transactions.Max(t => t.Date):yyyy-MM-dd}");

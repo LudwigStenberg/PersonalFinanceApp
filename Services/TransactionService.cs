@@ -8,6 +8,7 @@ public class TransactionService
 {
     private readonly ITransactionStorage _transactionStorage;
     private readonly DatabaseService _dbService;
+    private UserTransactionDataDTO _currentUserTransactionData;
 
 
     public TransactionService(ITransactionStorage transactionStorage, DatabaseService dbService)
@@ -40,41 +41,33 @@ public class TransactionService
     /// <summary>
     /// Removes an existing transaction for the specified user.
     /// </summary>
-    public async Task<bool> RemoveTransactionAsync(Transaction transactionToRemove, int userId)
+    public async Task<bool> RemoveTransactionAsync(int transactionId)
     {
         try
         {
-            List<Transaction> transactions = await _transactionStorage.LoadTransactionsAsync(userId);
-            bool removed = transactions.Remove(transactionToRemove);
+            // Retrieve the current transaction data via TransactionService
+            var userData = GetCurrentUserTransactionData();
 
-            if (!removed)
+            // Find and remove the transaction
+            var transactionToRemove = userData.Transactions.FirstOrDefault(t => t.TransactionId == transactionId);
+            if (transactionToRemove == null)
             {
-                Console.WriteLine($"Transaction not found for removal. User ID: {userId}, Transaction: {transactionToRemove}.");
+                Console.WriteLine($"Transaction with ID {transactionId} not found.");
                 return false;
             }
 
-            return await _transactionStorage.SaveTransactionsAsync(transactions, userId);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error removing transaction for User {userId}: {ex.Message}");
-            return false;
-        }
-    }
+            userData.Transactions.Remove(transactionToRemove);
 
-    /// <summary>
-    /// Retrieves all transactions for the specified user.
-    /// </summary>
-    public async Task<List<Transaction>> GetCurrentUserTransactionsAsync(int userId)
-    {
-        try
-        {
-            return await _transactionStorage.LoadTransactionsAsync(userId);
+            // Save the updated transactions list via _transactionStorage
+            await _transactionStorage.SaveTransactionsAsync(userData.Transactions, userData.UserId);
+
+            Console.WriteLine($"Transaction with ID {transactionId} successfully removed.");
+            return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error getting transactions for User {userId}: {ex.Message}");
-            return new List<Transaction>();
+            Console.WriteLine($"Error removing transaction with ID {transactionId}: {ex.Message}");
+            return false;
         }
     }
 
@@ -83,36 +76,57 @@ public class TransactionService
     // ===================================================================================
     //                                  Utility Methods
     // ===================================================================================
+    public async Task<UserTransactionDataDTO> GetUserTransactionDataAsync(int userId)
+    {
+        if (_currentUserTransactionData == null || _currentUserTransactionData.UserId != userId)
+        {
+            _currentUserTransactionData = await _transactionStorage.LoadTransactionsAsync(userId);
+        }
+
+        return _currentUserTransactionData;
+    }
+
+    public UserTransactionDataDTO GetCurrentUserTransactionData()
+    {
+        if (_currentUserTransactionData == null)
+        {
+            throw new InvalidOperationException("User transaction data has not been loaded.");
+        }
+        return _currentUserTransactionData;
+    }
+
+
     /// <summary>
     /// Gets the count of all transactions for the specified user.
     /// </summary>
-    public async Task<int> GetTransactionCountAsync(int userId)
-    {
-        try
-        {
-            List<Transaction> transactions = await _transactionStorage.LoadTransactionsAsync(userId);
-            return transactions.Count;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error getting transaction count for User {userId}: {ex.Message}");
-            return 0;
-        }
-    }
+    /// REMOVE? summary has its own counter.
+    // public int GetTransactionCount()
+    // {
+    //     try
+    //     {
+    //         UserTransactionDataDTO userData = GetCurrentUserTransactionData();
+    //         return userData.Transactions.Count;
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Error getting transaction count: {ex.Message}");
+    //         return 0;
+    //     }
+    // }
 
     /// <summary>
     /// Retrieves all transactions for the user, ordered by date (ascending).
     /// </summary>
-    public async Task<List<Transaction>> GetOrderedTransactionsAsync(int userId)
+    public List<Transaction> GetOrderedTransactions()
     {
         try
         {
-            List<Transaction> transactions = await _transactionStorage.LoadTransactionsAsync(userId);
-            return transactions.OrderBy(t => t.Date).ToList();
+            UserTransactionDataDTO userData = GetCurrentUserTransactionData();
+            return userData.Transactions.OrderBy(t => t.Date).ToList();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error retrieving ordered transactions for User {userId}: {ex.Message}");
+            Console.WriteLine($"Error retrieving ordered transactions: {ex.Message}");
             return new List<Transaction>();
         }
     }
@@ -120,34 +134,40 @@ public class TransactionService
     /// <summary>
     /// Calculates the total income and expenses for the user.
     /// </summary>
-    public async Task<(decimal TotalIncome, decimal TotalExpenses)> CalculateTotalsAsync(int userId)
+    public (decimal TotalIncome, decimal TotalExpenses) CalculateTotals()
     {
         try
         {
-            List<Transaction> transactions = await _transactionStorage.LoadTransactionsAsync(userId);
-            decimal totalIncome = transactions.Where(t => t.Type == TransactionType.Income).Sum(t => t.Amount);
-            decimal totalExpenses = transactions.Where(t => t.Type == TransactionType.Expense).Sum(t => t.Amount);
+            var userData = GetCurrentUserTransactionData();
+            decimal totalIncome = userData.Transactions
+                .Where(t => t.Type == TransactionType.Income)
+                .Sum(t => t.Amount);
+
+            decimal totalExpenses = userData.Transactions
+                .Where(t => t.Type == TransactionType.Expense)
+                .Sum(t => t.Amount);
 
             return (totalIncome, totalExpenses);
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
-            Console.WriteLine($"Error calculating totals for User {userId}: {ex.Message}");
+            Console.WriteLine($"Error calculating totals: {ex.Message}");
             return (0, 0);
         }
     }
 
+
     /// <summary>
     /// Calculates the user's account balance (Income - Expenses).
     /// </summary>
-    public async Task<decimal> GetAccountBalanceAsync(int userId)
+    public decimal GetAccountBalance()
     {
         try
         {
-            List<Transaction> transactions = await _transactionStorage.LoadTransactionsAsync(userId);
+            var userData = GetCurrentUserTransactionData();
 
             decimal accountBalance = 0;
-            foreach (var t in transactions)
+            foreach (var t in userData.Transactions)
             {
                 if (t.Type == TransactionType.Income)
                 {
@@ -161,12 +181,13 @@ public class TransactionService
 
             return accountBalance;
         }
-        catch (Exception ex)
+        catch (InvalidOperationException ex)
         {
-            Console.WriteLine($"Error calculating account balance for User {userId}: {ex.Message}");
+            Console.WriteLine($"Error calculating account balance: {ex.Message}");
             return 0;
         }
     }
+
 
 
     // ===================================================================================

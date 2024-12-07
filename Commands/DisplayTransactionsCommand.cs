@@ -93,7 +93,9 @@ public class DisplayTransactionsCommand : ICommand
                     if (indexToRemove != -1)
                     {
                         var transactionToRemove = summary.Transactions[indexToRemove - 1];
-                        bool success = await _transactionService.RemoveTransactionAsync(transactionToRemove, _userId);
+                        int transactionId = transactionToRemove.TransactionId;
+
+                        bool success = await _transactionService.RemoveTransactionAsync(transactionId);
                         ConsoleUI.DisplaySuccess(success
                             ? "Transaction removed successfully."
                             : "Failed to remove transaction.");

@@ -24,7 +24,6 @@ public class LoginManager
     {
         var (username, password) = InputHandler.GetExistingUserCredentials();
 
-        // Authenticate the user using UserService.
         if (_userService.AuthenticateUser(username, password))
         {
             ConsoleUI.DisplaySuccess("Login successful...");
@@ -36,30 +35,24 @@ public class LoginManager
                 return false;
             }
 
-            // Attempt to initialize user data.
-            if (await InitializeUserData())
-            {
-                int transactionCount = await _transactionService.GetTransactionCountAsync(_userService.CurrentUser.UserId);
-                Console.WriteLine($"{transactionCount} transactions loaded for {username}");
+            // Fetch and cache user data
+            UserTransactionDataDTO userData = await _transactionService.GetUserTransactionDataAsync(_userService.CurrentUser.UserId);
 
-                if (transactionCount == 0)
-                {
-                    Console.WriteLine("No transactions found for this user.");
-                }
-                return true;
-            }
-            else
+            // Provide feedback based on loaded transactions
+            Console.WriteLine($"Loaded {userData.Transactions.Count} transactions.");
+            if (userData.Transactions.Count > 0)
             {
-                ConsoleUI.DisplayError("Failed to load user data. Some features may be unavailable.");
+                ConsoleUI.DisplaySuccess("Data successfully loaded! Continuing...");
                 return true;
             }
+
+            ConsoleUI.DisplayError("No data found for this user.");
+            return false;
         }
 
-        // Authentication failed.
         ConsoleUI.DisplayError("Login failed. Username or Password is incorrect.");
         return false;
     }
-
 
 
     public bool HandleCreateAccount()
@@ -86,23 +79,4 @@ public class LoginManager
 
         return _userService.SignOut();
     }
-
-
-    private async Task<bool> InitializeUserData()
-    {
-        List<Transaction> loadedTransactions =
-            await _transactionService.GetCurrentUserTransactionsAsync(_userService.CurrentUser.UserId);
-
-        Console.WriteLine($"Loaded {loadedTransactions.Count} transactions.");
-        if (loadedTransactions.Count > 0)
-        {
-            ConsoleUI.DisplaySuccess("Data successfully loaded! Continuing...");
-            return true;
-        }
-
-        ConsoleUI.DisplayError("No data found for this user.");
-        return false;
-    }
-
-
 }

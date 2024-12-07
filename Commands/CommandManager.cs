@@ -61,11 +61,11 @@ public class CommandManager
 
 
 
-    public async Task ExecuteCommand(ConsoleKey key)
+    public void ExecuteCommand(ConsoleKey key)
     {
         if (_commands.TryGetValue(key, out var command))
         {
-            await command.Execute();
+            command.Execute();
         }
         else
         {

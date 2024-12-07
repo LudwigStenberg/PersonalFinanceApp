@@ -56,13 +56,13 @@ class Program
             case ConsoleKey.D1:
                 if (await _loginManager.HandleLogin())
                 {
-                    await RunMainMenu();
+                    RunMainMenu();
                 }
                 break;
             case ConsoleKey.D2:
                 if (_loginManager.HandleCreateAccount())
                 {
-                    await RunMainMenu();
+                    RunMainMenu();
                 }
                 break;
             case ConsoleKey.Escape:
@@ -75,7 +75,7 @@ class Program
         return true;
     }
 
-    static async Task RunMainMenu()
+    static void RunMainMenu()
     {
         bool userSignedIn = true;
 
@@ -86,7 +86,7 @@ class Program
         {
             try
             {
-                await ConsoleUI.DisplayDashboard(_transactionService, _userService.CurrentUser.UserId);
+                ConsoleUI.DisplayDashboard(_transactionService, _userService.CurrentUser.UserId);
                 ConsoleKey userChoice = ConsoleUI.DisplayMenuAndGetChoice(new[]
                 {
                     "1. Show Transactions",
@@ -101,7 +101,7 @@ class Program
                     case ConsoleKey.D1:
                     case ConsoleKey.D2:
                     case ConsoleKey.D3:
-                        await _commandManager.ExecuteCommand(userChoice);
+                        _commandManager.ExecuteCommand(userChoice);
                         break;
 
                     case ConsoleKey.D4:

@@ -13,16 +13,18 @@ public class DatabaseTransactionStorage : ITransactionStorage
     }
 
 
-    public async Task<List<Transaction>> LoadTransactionsAsync(int userId)
+    public async Task<UserTransactionDataDTO> LoadTransactionsAsync(int userId)
     {
         // Initialization of an empty list to hold the transactions.
         var transactions = new List<Transaction>();
+        string username = null;
 
         // SQL Query to select all transactions for the given user ID.
         string sql = @"
-            SELECT transaction_id, date, type, amount, category, custom_category_name, description, user_id
-            FROM transactions
-            WHERE user_id = @UserId
+            SELECT t.transaction_id, t.date, t.type, t.amount, t.category, t.custom_category_name, t.description, u.username
+            FROM transactions t
+            JOIN users u ON t.user_id = u.user_id
+            WHERE t.user_id = @UserId
             ";
 
         try
@@ -44,9 +46,11 @@ public class DatabaseTransactionStorage : ITransactionStorage
                     category: Enum.TryParse<TransactionCategory>(reader.GetString(4), out var category) ? category : throw new InvalidOperationException("Invalid category"),
                     customCategoryName: reader.IsDBNull(5) ? null : reader.GetString(5),
                     description: reader.IsDBNull(6) ? null : reader.GetString(6),
-                    userId: reader.GetInt32(7)
+                    userId: userId
                 );
 
+
+                username ??= reader.GetString(7); // Assign only once.
 
                 transactions.Add(transaction);
             }
@@ -57,7 +61,13 @@ public class DatabaseTransactionStorage : ITransactionStorage
             throw;
         }
 
-        return transactions;
+        return new UserTransactionDataDTO
+        {
+            UserId = userId,
+            Username = username,
+            Transactions = transactions
+
+        };
     }
 
 

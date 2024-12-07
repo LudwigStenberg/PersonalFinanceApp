@@ -31,9 +31,10 @@ public class RemoveTransactionCommand : ICommand
             if (index == -1) return;
 
             // Identify and remove the transaction.
-            var transactionToRemove = summary.Transactions[index - 1];
+            Transaction transactionToRemove = summary.Transactions[index - 1];
+            int transactionId = transactionToRemove.TransactionId;
 
-            bool success = await _transactionService.RemoveTransactionAsync(transactionToRemove, _userId);
+            bool success = await _transactionService.RemoveTransactionAsync(transactionId);
 
             if (success)
             {

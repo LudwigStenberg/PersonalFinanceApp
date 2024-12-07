@@ -236,8 +236,15 @@ FRIDAY, DECEMBER 6
   ensuring group keys are formatted correctly based on the selected time unit.
 - Tested and confirmed functionality for transaction grouping, display, and summaries.
 
+=========================================================
+SATURDAY, DECEMBER 7
+Removed InitializeUserData and merged it into HandleLogin
+Created UserTransactionDataDTO 
+Created wrapper methods
 
 
+=========================================================
+=========================================================
 =========================================================
 TESTING & DEBUGGING
   To remove:
