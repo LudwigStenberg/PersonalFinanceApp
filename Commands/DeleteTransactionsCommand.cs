@@ -9,14 +9,18 @@ public class DeleteTransactionsCommand : ICommand
         _transactionService = transactionService;
     }
 
+
     public async Task Execute()
     {
         while (true)
         {
-            Console.WriteLine("Choose the criteria for deleting transactions:");
-            Console.WriteLine("[1]   - By Category");
-            Console.WriteLine("[2]   - By Date Range");
-            Console.WriteLine("[Esc] - Cancel and return to the main menu");
+            ConsoleUI.ClearAndWriteLine(
+            $"""    
+            Choose the criteria for deleting transactions:
+            [1]   - By Category
+            [2]   - By Date Range
+            [Esc] - Cancel and return to the main menu
+            """);
 
             var userChoice = Console.ReadKey(intercept: true).Key;
 
@@ -44,7 +48,7 @@ public class DeleteTransactionsCommand : ICommand
     private async Task DeleteByCategory()
     {
         // Collect and validate category input
-        Console.WriteLine("Enter category name:");
+        Console.Write("\nEnter category name:");
         string categoryName = Console.ReadLine()?.Trim();
         if (string.IsNullOrWhiteSpace(categoryName))
         {
@@ -56,7 +60,14 @@ public class DeleteTransactionsCommand : ICommand
         if (ConsoleUI.GetConfirmation($"Delete all transactions for category: {categoryName}?"))
         {
             bool success = await _transactionService.DeleteTransactionsByCategoryAsync(categoryName);
-            Console.WriteLine(success ? "Transactions deleted successfully." : "An error occurred.");
+            if (success)
+            {
+                ConsoleUI.DisplaySuccess("Transactions deleted successfully.");
+            }
+            else
+            {
+                ConsoleUI.DisplayError("An error occurred.");
+            }
         }
     }
 

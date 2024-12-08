@@ -42,64 +42,62 @@ public class TransactionService
     /// </summary>
     public async Task<bool> DeleteTransactionAsync(int transactionId)
     {
+        const string deleteSql = @"DELETE FROM transactions
+                                   WHERE transaction_id = @TransactionId";
         try
         {
-            // Retrieve the current transaction data via TransactionService
-            var userData = GetCurrentUserTransactionData();
-
-            // Find and remove the transaction
-            var transactionToRemove = userData.Transactions.FirstOrDefault(t => t.TransactionId == transactionId);
-            if (transactionToRemove == null)
+            var parameters = new Dictionary<string, object>
             {
-                Console.WriteLine($"Transaction with ID {transactionId} not found.");
-                return false;
-            }
+                { "@TransactionId", transactionId }
+            };
 
-            userData.Transactions.Remove(transactionToRemove);
-
-            // Save the updated transactions list via _transactionStorage
-            await _transactionStorage.SaveTransactionsAsync(userData.Transactions, userData.UserId);
-
-            Console.WriteLine($"Transaction with ID {transactionId} successfully removed.");
+            await _dbService.ExecuteNonQueryAsync(deleteSql, parameters);
+            ConsoleUI.DisplaySuccess($"Transaction with ID {transactionId} successfully deleted.");
             return true;
+
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error removing transaction with ID {transactionId}: {ex.Message}");
+            ConsoleUI.DisplayError($"Error deleting transaction with ID {transactionId}: {ex.Message}");
             return false;
         }
     }
 
 
-
-    public async Task<bool> DeleteTransactionsAsync(List<int> transactionIds)
+    public async Task<bool> DeleteTransactionsAsync(IEnumerable<int> transactionIds)
     {
-        if (transactionIds == null || transactionIds.Count == 0)
+        if (transactionIds == null || !transactionIds.Any())
         {
-            Console.WriteLine("No transactions to delete.");
+            ConsoleUI.DisplayError("No transaction IDs provided for deletion.");
             return false;
         }
 
-        const string deleteSql = "DELETE FROM transactions WHERE transaction_id = @TransactionId";
+        int count = transactionIds.Count(); // Calculate count once for reuse
 
-        using var transaction = await _dbService.Connection.BeginTransactionAsync();
+        const string deleteSql = @"DELETE FROM transactions
+                               WHERE transaction_id = ANY(@TransactionIds)";
+
+        await using var transaction = await _dbService.Connection.BeginTransactionAsync();
+
         try
         {
-            foreach (var id in transactionIds)
-            {
-                using var cmd = new NpgsqlCommand(deleteSql, _dbService.Connection, transaction);
-                cmd.Parameters.AddWithValue("@TransactionId", id);
-                await cmd.ExecuteNonQueryAsync();
-            }
+            // Create parameters for the query
+            var parameters = new Dictionary<string, object>
+        {
+            { "@TransactionIds", transactionIds.ToArray() } // Ensure parameter is an array
+        };
 
-            await transaction.CommitAsync();
-            Console.WriteLine("Transactions deleted successfully.");
+            // Execute the query
+            await _dbService.ExecuteNonQueryAsync(deleteSql, parameters);
+
+            await transaction.CommitAsync(); // Commit the transaction
+            ConsoleUI.DisplaySuccess($"{count} transactions successfully deleted.");
             return true;
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
-            Console.WriteLine($"Error deleting transactions: {ex.Message}");
+            await transaction.RollbackAsync(); // Rollback on error
+            ConsoleUI.DisplayError($"Error deleting transactions: {ex.Message}");
             return false;
         }
     }
@@ -209,7 +207,7 @@ public class TransactionService
     /// <summary>
     /// Handles grouping and summarization of transactions.
     /// </summary>
-    public async Task<TransactionSummary> GetGroupedTransactionsAsync(string timeUnit, int userId)
+    public async Task<TransactionSummaryDTO> GetGroupedTransactionsAsync(string timeUnit, int userId)
     {
         try
         {
@@ -233,7 +231,7 @@ public class TransactionService
             cmd.Parameters.AddWithValue("@UserId", userId);
 
             using var reader = await cmd.ExecuteReaderAsync();
-            var summary = new TransactionSummary(timeUnit);
+            var summary = new TransactionSummaryDTO(timeUnit);
 
             while (await reader.ReadAsync())
             {
@@ -312,8 +310,12 @@ public class TransactionService
     public async Task<bool> DeleteTransactionsByCategoryAsync(string categoryName)
     {
         var userData = GetCurrentUserTransactionData();
+
+        // Match transactions by either enum Category or CustomCategoryName
         var transactionIds = userData.Transactions
-            .Where(t => t.Category.ToString().Equals(categoryName, StringComparison.OrdinalIgnoreCase))
+            .Where(t =>
+                t.Category.ToString().Equals(categoryName, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrWhiteSpace(t.CustomCategoryName) && t.CustomCategoryName.Equals(categoryName, StringComparison.OrdinalIgnoreCase)))
             .Select(t => t.TransactionId)
             .ToList();
 

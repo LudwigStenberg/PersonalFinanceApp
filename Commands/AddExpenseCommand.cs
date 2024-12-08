@@ -7,20 +7,18 @@ public class AddExpenseCommand : ICommand
 
     public AddExpenseCommand(TransactionService transactionService, int userId)
     {
-        _transactionService = transactionService ?? throw new ArgumentNullException(nameof(transactionService));
-        _userId = userId > 0 ? userId : throw new ArgumentException("User ID must be positive.", nameof(userId));
+        _transactionService = transactionService;
+        _userId = userId;
     }
 
     public async Task Execute()
     {
         try
         {
-            ConsoleUI.ClearAndWriteLine("== Add Expense ==\n");
+            ConsoleUI.DisplayAddExpenseHeader();
 
-            // Gather input for the transaction.
             TransactionInputDTO transactionData = InputHandler.GetTransactionInput();
 
-            // Create a new Transaction object.
             Transaction transaction = _transactionService.CreateTransaction(
                  transactionData,
                  TransactionType.Expense,

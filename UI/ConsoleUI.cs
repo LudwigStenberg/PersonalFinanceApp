@@ -9,7 +9,7 @@ public class ConsoleUI
     }
 
 
-    public static void DisplayError(string message, int sleep = 2000)
+    public static void DisplayError(string message, int sleep = 1500)
     {
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine(message);
@@ -18,8 +18,7 @@ public class ConsoleUI
     }
 
 
-
-    public static void DisplaySuccess(string message, int delayMs = 2000)
+    public static void DisplaySuccess(string message, int delayMs = 1500)
     {
         Console.ForegroundColor = ConsoleColor.Green;
         Console.WriteLine(message);
@@ -34,15 +33,6 @@ public class ConsoleUI
         Thread.Sleep(delayMs);
     }
 
-    public static void WelcomeUser(string username)
-    {
-        if (!string.IsNullOrWhiteSpace(username))
-        {
-            DisplaySuccess($"\nGood to see you, {username}!");
-        }
-    }
-
-
     public static void DisplayMainMenu(TransactionService transactionService)
     {
         try
@@ -52,17 +42,17 @@ public class ConsoleUI
 
             ClearAndWriteLine(
             $"""
-            ┏━━━━━━━━━━━━━━━━ DASHBOARD ━━━━━━━━━━━━━━━━━━━┓
+            ┏━━━━━━━━━━━━━━━━━ DASHBOARD ━━━━━━━━━━━━━━━━━━┓
             ┃                                              ┃
-            ┃       [1]   -  Show Transactions             ┃  
-            ┃       [2]   -  Add Income                    ┃  
-            ┃       [3]   -  Add Expense                   ┃   
+            ┃    [1]   -  Show Transactions                ┃  
+            ┃    [2]   -  Add Income                       ┃  
+            ┃    [3]   -  Add Expense                      ┃   
             ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-            ┃       [6]   -  Sign Out                      ┃  
-            ┃       [Esc] -  Exit Program                  ┃  
+            ┃    [6]   -  Sign Out                         ┃  
+            ┃    [Esc] -  Exit Program                     ┃  
             ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-            Hello, {userTransactionData.Username}!       
-            Account Balance: {accountBalance:C}  
+                 Good to see you, {userTransactionData.Username}!       
+                 Account Balance: {accountBalance:C}  
             """);
         }
         catch (Exception ex)
@@ -71,22 +61,63 @@ public class ConsoleUI
         }
     }
 
-    public static void DisplayLoginMenu()
+    public static void DisplayStartMenu()
     {
         ClearAndWriteLine(
         $"""
         ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
         ┃             PERSONAL FINANCE APP             ┃ 
         ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-        ┃       [1]    - Sign In                       ┃
-        ┃       [2]    - Create Account                ┃
-        ┃       [Esc]  - Exit Application              ┃
+        ┃    [1]    - Sign In                          ┃
+        ┃    [2]    - Create Account                   ┃
+        ┃    [Esc]  - Exit Application                 ┃
+        ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+        """);
+    }
+
+    public static void DisplayLoginHeader()
+    {
+        ClearAndWriteLine(
+        $"""
+        ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+        ┃           SIGN IN AS EXISTING USER           ┃ 
+        ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+        """);
+    }
+
+    public static void DisplayCreateAccountHeader()
+    {
+        ClearAndWriteLine(
+        $"""
+        ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+        ┃               CREATE AN ACCOUNT              ┃ 
+        ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+        """);
+    }
+
+    public static void DisplayAddIncomeHeader()
+    {
+        ClearAndWriteLine(
+        $"""
+        ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+        ┃                  ADD INCOME                  ┃ 
+        ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+        """);
+    }
+
+    public static void DisplayAddExpenseHeader()
+    {
+        ClearAndWriteLine(
+        $"""
+        ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+        ┃                  ADD EXPENSE                 ┃ 
         ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
         """);
     }
 
 
-    public static void DisplayTransactionsByIndividual(TransactionSummary summary, bool showIndices = false)
+
+    public static void DisplayTransactionsByIndividual(TransactionSummaryDTO summary, bool showIndices = false)
     {
         const int padding = 5;
         const int dateWidth = 15;
@@ -105,7 +136,7 @@ public class ConsoleUI
         {
             string displayKey = TransactionDateHelper.GetGroupKey(groupKey, summary.TimeUnit);
 
-            Console.WriteLine(new string('=', padding + dateWidth + typeWidth + amountWidth + categoryWidth + descriptionWidth));
+            Console.WriteLine(new string('━', padding + dateWidth + typeWidth + amountWidth + categoryWidth + descriptionWidth));
             Console.WriteLine($"{new string(' ', padding)}[{displayKey}]\n");
 
 
@@ -126,13 +157,13 @@ public class ConsoleUI
                 Console.WriteLine();
             }
         }
-        Console.WriteLine(new string('=', padding + dateWidth + typeWidth + amountWidth + categoryWidth + descriptionWidth));
+        Console.WriteLine(new string('━', padding + dateWidth + typeWidth + amountWidth + categoryWidth + descriptionWidth));
         DisplaySummary(summary);
     }
 
 
 
-    public static void DisplayTransactionsByCategory(TransactionSummary summary)
+    public static void DisplayTransactionsByCategory(TransactionSummaryDTO summary)
     {
         var categorizedTransactions = summary.Transactions
             .GroupBy(t => t.Category)
@@ -141,16 +172,16 @@ public class ConsoleUI
         foreach (var category in categorizedTransactions)
         {
 
-            Console.WriteLine($"\nCategory: {category.Key}");
+            Console.WriteLine($"\n     Category: {category.Key}");
             decimal categoryTotal = 0;
 
             foreach (var transaction in category)
             {
-                Console.WriteLine($"  {transaction.Date:yyyy-MM-dd}  {transaction.Amount,10:C}  {transaction.Description}");
+                Console.WriteLine($"     {transaction.Date:yyyy-MM-dd}  {transaction.Amount,10:C}  {transaction.Description}");
                 categoryTotal += transaction.Amount;
             }
 
-            Console.WriteLine($"  Total for {category.Key}: {categoryTotal,10:C}");
+            Console.WriteLine($"     Total for {category.Key}: {categoryTotal,10:C}");
 
         }
         DisplaySummary(summary);
@@ -158,7 +189,7 @@ public class ConsoleUI
 
 
 
-    public static void DisplaySummary(TransactionSummary summary)
+    public static void DisplaySummary(TransactionSummaryDTO summary)
     {
         if (summary.IsEmpty)
         {
@@ -170,7 +201,7 @@ public class ConsoleUI
         Console.WriteLine($"     Total Income:    {summary.TotalIncome,15:C}\tNumber of transactions: {summary.Transactions.Count}");
         Console.WriteLine($"     Total Expenses:  {summary.TotalExpense,15:C}\tCurrent view: {summary.TimeUnit}");
         Console.WriteLine($"     Net Result:      {summary.NetResult,15:C}\tCurrent date range: {summary.Transactions.Min(t => t.Date):yyyy-MM-dd} to {summary.Transactions.Max(t => t.Date):yyyy-MM-dd}");
-        Console.WriteLine(new string('=', 99));
+        Console.WriteLine(new string('━', 97));
 
     }
 
@@ -233,7 +264,7 @@ public class ConsoleUI
             : "Switching to category View...", 2000);
     }
 
-    public static int GetTransactionRemovalIndex(TransactionSummary summary)
+    public static int GetTransactionRemovalIndex(TransactionSummaryDTO summary)
     {
         DisplayTransactionsByIndividual(summary, true);
         return InputHandler.GetTransactionIndex(summary.Transactions.Count);

@@ -1,4 +1,3 @@
-using System.Reflection.Metadata;
 using Npgsql;
 using PersonalFinanceApp;
 
@@ -13,10 +12,9 @@ public class DatabaseService : IDisposable
     }
 
     private readonly string _connectionString =
-        "Host=localhost; Port=5432; Database=PersonalFinanceApp; Username=postgres; Password=assword;";
+            "Host=localhost; Port=5432; Database=PersonalFinanceApp; Username=postgres; Password=assword;";
 
-    private const string CreateUsersTableSql = @"
-        CREATE TABLE IF NOT EXISTS users (
+    private const string CreateUsersTableSql = @"CREATE TABLE IF NOT EXISTS users (
             user_id SERIAL PRIMARY KEY,
             username VARCHAR(50) UNIQUE NOT NULL,
             password_hashed TEXT NOT NULL,
@@ -39,8 +37,6 @@ public class DatabaseService : IDisposable
         {
             this.connection = new NpgsqlConnection(_connectionString);
             connection.Open();
-            InitializeDatabase();
-
         }
         catch (Exception ex)
         {
@@ -49,30 +45,36 @@ public class DatabaseService : IDisposable
         }
     }
 
+    public static async Task<DatabaseService> CreateAsync()
+    {
+        var dbService = new DatabaseService();
+        await dbService.InitializeDatabaseAsync();
+        return dbService;
+    }
 
-
+    // Used in insantiation of dbService through "using".
     public void Dispose()
     {
-        if (connection == null) return; // 1. Guard-clause for immediate handling.
+        if (connection == null) return;
 
-        if (connection.State == System.Data.ConnectionState.Open) // 2. Checks if the connection is open.
+        if (connection.State == System.Data.ConnectionState.Open)
         {
-            connection.Close(); // 3. Close the connection.
+            connection.Close();
         }
 
-        connection.Dispose(); // Dispose the connection to release resources.
+        connection.Dispose();
     }
 
 
-    private void InitializeDatabase()
+    private async Task InitializeDatabaseAsync()
     {
         try
         {
             Console.WriteLine("Creating users table...");
-            ExecuteNonQuery(CreateUsersTableSql);
+            await ExecuteNonQueryAsync(CreateUsersTableSql);
 
             Console.WriteLine("\nCreating transactions table...");
-            ExecuteNonQuery(CreateTransactionsTableSql);
+            await ExecuteNonQueryAsync(CreateTransactionsTableSql);
 
             Console.WriteLine("Database initialization completed sucessfully.");
         }
@@ -84,21 +86,33 @@ public class DatabaseService : IDisposable
     }
 
 
-    public void ExecuteNonQuery(string sql)
+    public async Task ExecuteNonQueryAsync(string sql, Dictionary<string, object> parameters = null)
     {
         try
         {
             using var cmd = new NpgsqlCommand(sql, connection);
-            cmd.ExecuteNonQuery();
+            AddParameters(cmd, parameters);
+            await cmd.ExecuteNonQueryAsync();
             ConsoleUI.DisplaySuccess($"Sucessfully executed SQL: {sql}");
-
         }
         catch (Exception ex)
         {
             ConsoleUI.DisplayError($"Error executing SQL: {sql}. Exception: {ex.Message}");
+            throw;
         }
     }
 
+
+    private void AddParameters(NpgsqlCommand cmd, Dictionary<string, object> parameters)
+    {
+        if (parameters != null)
+        {
+            foreach (var param in parameters)
+            {
+                cmd.Parameters.AddWithValue(param.Key, param.Value);
+            }
+        }
+    }
 
 
     public User AddUser(string username, string passwordHashed)
@@ -108,12 +122,9 @@ public class DatabaseService : IDisposable
             throw new ArgumentException("Username and password cannot be null or empty.");
         }
 
-        string sql = @"
-            INSERT INTO users (username, password_hashed) 
-            VALUES (@Username, @PasswordHash) 
-            RETURNING user_id
-            ";
-
+        string sql = @"INSERT INTO users (username, password_hashed) 
+                       VALUES (@Username, @PasswordHash) 
+                       RETURNING user_id";
         try
         {
             using var cmd = new NpgsqlCommand(sql, connection);
@@ -131,47 +142,11 @@ public class DatabaseService : IDisposable
         return null;
     }
 
-    public List<User> GetAllUsers()
-    {
-        string sql = @"
-        SELECT user_id, username, password_hashed
-        FROM users
-    ";
-
-        var users = new List<User>();
-
-        try
-        {
-            using var cmd = new NpgsqlCommand(sql, Connection);
-
-            using var reader = cmd.ExecuteReader();
-
-            while (reader.Read())
-            {
-                users.Add(new User(
-                    userId: reader.GetInt32(0),
-                    username: reader.GetString(1),
-                    hashedPassword: reader.GetString(2)
-                ));
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching all users: {ex.Message}");
-        }
-
-        return users;
-    }
-
-
     public User GetUserByUsername(string username)
     {
-        string sql = @"
-            SELECT user_id, username, password_hashed
-            FROM users
-            WHERE username = @Username
-            ";
-
+        string sql = @"SELECT user_id, username, password_hashed
+                       FROM users
+                       WHERE username = @Username";
         try
         {
             using var cmd = new NpgsqlCommand(sql, connection);

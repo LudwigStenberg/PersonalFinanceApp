@@ -1,6 +1,6 @@
 ﻿namespace PersonalFinanceApp
 {
-    public class TransactionSummary // Flytta till Models? Maybe, but I don't think so.
+    public class TransactionSummaryDTO // Flytta till Models? Maybe, but I don't think so.
     {
         public List<Transaction> Transactions { get; set; }
         public decimal TotalIncome { get; set; }
@@ -16,7 +16,7 @@
             }
         }
 
-        public TransactionSummary(string timeUnit)
+        public TransactionSummaryDTO(string timeUnit)
         {
             Transactions = new List<Transaction>();
             TimeUnit = timeUnit;

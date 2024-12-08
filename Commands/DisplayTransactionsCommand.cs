@@ -13,25 +13,27 @@ public class DisplayTransactionsCommand : ICommand
 
     public async Task Execute()
     {
-        bool viewByTransaction = true; // Default to viewing transactions individually.
-        string timeUnit = "Month";     // Default time unit.
+        var _commandManager = new CommandManager();
+        _commandManager.InitializeCommands(_transactionService, _userId);
+
+        bool viewByTransaction = true; // Default view
+        string timeUnit = "Month";     // Default time unit
 
         while (true)
         {
             try
             {
-                ConsoleUI.ClearAndWriteLine("     [TRANSACTIONS]\n");
-
-                // Fetch and prepare transaction data.
+                Console.Clear();
+                // Fetch and summarize transactions
                 var summary = await _transactionService.GetGroupedTransactionsAsync(timeUnit, _userId);
 
                 if (summary.GroupedTransactions.Count == 0)
                 {
-                    ConsoleUI.DisplayError("No transactions to display.");
-                    return;
+                    ConsoleUI.DisplayError("No transactions available.");
+                    return; // Exit to Main Menu
                 }
 
-                // Display based on current view mode.
+                // Display transactions
                 if (viewByTransaction)
                 {
                     ConsoleUI.DisplayTransactionsByIndividual(summary, showIndices: false);
@@ -42,54 +44,46 @@ public class DisplayTransactionsCommand : ICommand
                 }
 
                 ConsoleKey userChoice = ConsoleUI.DisplayTextAndGetChoice(new[]
-                {
-                "    View By: [1] Day [2] Week [3] Month [4] Year",
-                "    [5]   -  Toggle by Transaction/Category",
-                "    [6]   -  Delete single transaction",
-                "    [7]   -  Delete multiple transactions",
-                "    [Esc] -  Go Back",
-            }, false);
+                        {
+                        $"""
+                             View By: [1] Day [2] Week [3] Month [4] Year 
+                             [5]   -  Toggle by Transaction/Category      
+                             [6]   -  Delete Single Transaction           
+                             [7]   -  Delete Multiple Transactions        
+                             [Esc] -  Go Back                             
+                        """
+                         }, clearScreen: false);
 
-                if (InputHandler.CheckForReturn(userChoice))
+                switch (userChoice)
                 {
-                    return;
-                }
+                    case ConsoleKey.D1: timeUnit = "Day"; break;
+                    case ConsoleKey.D2: timeUnit = "Week"; break;
+                    case ConsoleKey.D3: timeUnit = "Month"; break;
+                    case ConsoleKey.D4: timeUnit = "Year"; break;
 
-                // Handle time unit changes.
-                timeUnit = userChoice switch
-                {
-                    ConsoleKey.D1 => "Day",
-                    ConsoleKey.D2 => "Week",
-                    ConsoleKey.D3 => "Month",
-                    ConsoleKey.D4 => "Year",
-                    _ => timeUnit
-                };
+                    case ConsoleKey.D5: // Toggle View
+                        viewByTransaction = !viewByTransaction;
+                        ConsoleUI.DisplayToggleViewMessage(viewByTransaction);
+                        break;
 
-                // Handle view toggle.
-                if (userChoice == ConsoleKey.D5)
-                {
-                    viewByTransaction = !viewByTransaction;
-                    ConsoleUI.DisplayToggleViewMessage(viewByTransaction);
-                }
+                    case ConsoleKey.D6: // Delete Single Transaction
+                    case ConsoleKey.D7: // Delete Multiple Transactions
+                        _commandManager.TryExecuteCommand(userChoice);
+                        break;
 
-                var _commandManager = new CommandManager();
+                    case ConsoleKey.Escape:
+                        return;
 
-                if (userChoice == ConsoleKey.D6)
-                {
-
-                    _commandManager.TryExecuteCommand(userChoice);
-                }
-                else if (userChoice == ConsoleKey.D7)
-                {
-                    _commandManager.TryExecuteCommand(userChoice);
+                    default:
+                        ConsoleUI.DisplayError("Invalid option, please try again.");
+                        break;
                 }
             }
             catch (Exception ex)
             {
-                ConsoleUI.DisplayError($"Error during transaction display: {ex.Message}");
-                return;
+                ConsoleUI.DisplayError($"An error occurred: {ex.Message}");
+                return; // Exit to Main Menu on error
             }
         }
     }
-
 }

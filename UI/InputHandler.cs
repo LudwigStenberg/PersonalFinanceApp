@@ -9,21 +9,17 @@ public class InputHandler
     public const int MinPasswordLength = 8;
     public const int MaxPasswordLength = 20;
 
-
-
-
     public static (string username, string password) GetNewUserCredentials()
     {
-        Console.Clear();
-        Console.WriteLine("== Create Account ==\n");
 
+        ConsoleUI.DisplayCreateAccountHeader();
         string username;
         string password;
 
 
         while (true)
         {
-            username = GetValidatedStringInput("Choose a username: ");
+            username = GetValidatedStringInput("  Choose a username: ");
             var (isValid, errorMessage) = ValidateUsername(username);
 
             if (isValid)
@@ -35,7 +31,7 @@ public class InputHandler
 
         while (true)
         {
-            password = GetMaskedPassword("Choose a password: ");
+            password = GetMaskedPassword("  Choose a password: ");
             var (isValid, errorMessage) = ValidatePassword(password);
 
             if (isValid)
@@ -48,29 +44,26 @@ public class InputHandler
     }
 
 
-
     public static (string username, string password) GetExistingUserCredentials()
     {
-        Console.Clear();
-        Console.WriteLine("== Sign in ==\n");
-
+        ConsoleUI.DisplayLoginHeader();
         string username;
         string password;
 
         while (true)
         {
-            username = GetValidatedStringInput("Enter your username: ");
+            username = GetValidatedStringInput("  Enter your username: ");
             if (!string.IsNullOrWhiteSpace(username))
                 break;
-            ConsoleUI.DisplayError("Username cannot be empty.");
+            ConsoleUI.DisplayError("  Username cannot be empty.");
         }
 
         while (true)
         {
-            password = GetMaskedPassword("Enter your password: ");
+            password = GetMaskedPassword("  Enter your password: ");
             if (!string.IsNullOrEmpty(password))
                 break;
-            ConsoleUI.DisplayError("Password cannot be empty");
+            ConsoleUI.DisplayError("  Password cannot be empty");
         }
 
         return (username, password);
@@ -254,124 +247,15 @@ public class InputHandler
         return false;
     }
 
-
     public static TransactionInputDTO GetTransactionInput()
     {
-        // Amount validation
-        decimal amount;
-        while (true)
-        {
-            amount = GetValidatedDecimalInput("Enter amount: ");
-            if (amount <= 0)
-            {
-                ConsoleUI.DisplayError("Amount must be greater than 0.");
-                continue;
-            }
-            if (amount > 999999999) // Prevent unreasonable amounts!!
-            {
-                ConsoleUI.DisplayError("Amount is unreasonably large. Please check your input.");
-                continue;
-            }
-            break;
-        }
+        // Gather input in steps
+        decimal amount = GetValidatedAmount();
+        DateTime date = GetValidatedDate();
+        string description = GetValidatedDescription();
+        var (selectedCategory, customCategoryName) = GetCategorySelection();
 
-        // Date validation
-        DateTime date;
-        while (true)
-        {
-            date = GetValidatedDateInput("Enter date (yyyy-mm-dd) or 'today' for current date: ");
-
-
-            if (date < DateTime.Now.AddYears(-100))
-            {
-                ConsoleUI.DisplayError("Date cannot be more than 100 years in the past.");
-                continue;
-            }
-
-            if (date > DateTime.Now.AddMonths(6))
-            {
-                ConsoleUI.DisplayError("Date cannot be more than 6 months in the future.");
-                continue;
-            }
-            break;
-        }
-
-        // Description validation
-        string description;
-        while (true)
-        {
-            description = GetValidatedStringInput("Enter a description (max 40 characters): ");
-
-            if (string.IsNullOrWhiteSpace(description))
-            {
-                description = "N/A";
-                break;
-            }
-
-            if (description.Length > 40)
-            {
-                ConsoleUI.DisplayError("Description cannot be longer than 40 characters.");
-                continue;
-            }
-
-
-            if (description.Any(c => char.IsControl(c)))
-            {
-                ConsoleUI.DisplayError("Description contains invalid characters.");
-                continue;
-            }
-            break;
-        }
-
-        // Category selection
-        ConsoleUI.DisplayCategories();
-        TransactionCategory selectedCategory;
-        string customCategoryName = null;
-
-        while (true)
-        {
-            try
-            {
-                var (customCategory, category) = GetValidatedCategoryInput("\nSelect a category (1-15): ");
-
-                if (category == TransactionCategory.Custom)
-                {
-                    // Validate custom category name
-                    while (true)
-                    {
-                        if (string.IsNullOrWhiteSpace(customCategory))
-                        {
-                            ConsoleUI.DisplayError("Custom category name cannot be empty.");
-                            customCategory = GetValidatedStringInput("Enter a custom category name: ");
-                            continue;
-                        }
-                        if (customCategory.Length > 15)
-                        {
-                            ConsoleUI.DisplayError("Custom category name cannot be longer than 15 characters.");
-                            customCategory = GetValidatedStringInput("Enter a custom category name: ");
-                            continue;
-                        }
-                        if (customCategory.Any(c => !char.IsLetterOrDigit(c) && c != ' ' && c != '-' && c != '_'))
-                        {
-                            ConsoleUI.DisplayError("Custom category can only contain letters, numbers, spaces, hyphens, and underscores.");
-                            customCategory = GetValidatedStringInput("Enter a custom category name: ");
-                            continue;
-                        }
-                        break;
-                    }
-                    customCategoryName = customCategory;
-                }
-
-                selectedCategory = category;
-                break;
-            }
-            catch (Exception)
-            {
-                ConsoleUI.DisplayError("Invalid category selection. Please try again.");
-            }
-        }
-
-        // Create new DTO
+        // Create and return the DTO
         return new TransactionInputDTO
         {
             Date = date,
@@ -382,6 +266,134 @@ public class InputHandler
         };
     }
 
+
+    private static decimal GetValidatedAmount()
+    {
+        while (true)
+        {
+            decimal amount = GetValidatedDecimalInput("Enter amount: ");
+            if (amount <= 0)
+            {
+                ConsoleUI.DisplayError("Amount must be greater than 0.");
+            }
+            else if (amount > 999999999)
+            {
+                ConsoleUI.DisplayError("Amount is unreasonably large. Please check your input.");
+            }
+            else
+            {
+                return amount;
+            }
+        }
+    }
+
+
+    private static DateTime GetValidatedDate()
+    {
+        while (true)
+        {
+            ConsoleUI.DisplayPrompt("Enter date (yyyy-mm-dd) or press Enter for today's date: ");
+            string userInput = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(userInput))
+            {
+                // Pressing Enter defaults to today's date
+                return DateTime.Today;
+            }
+            if (DateTime.TryParseExact(userInput, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
+            {
+                if (date < DateTime.Now.AddYears(-100))
+                {
+                    ConsoleUI.DisplayError("Date cannot be more than 100 years in the past.");
+                }
+                else if (date > DateTime.Now.AddMonths(6))
+                {
+                    ConsoleUI.DisplayError("Date cannot be more than 6 months in the future.");
+                }
+                else
+                {
+                    return date; // Valid date within range
+                }
+            }
+            else
+            {
+                ConsoleUI.DisplayError("Invalid entry. Enter date as yyyy-mm-dd or press Enter for today's date.");
+            }
+        }
+    }
+
+
+
+    private static string GetValidatedDescription()
+    {
+        while (true)
+        {
+            string description = GetValidatedStringInput("Enter a description (max 40 characters): ", 40);
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                return "N/A";
+            }
+            if (description.Any(c => char.IsControl(c)))
+            {
+                ConsoleUI.DisplayError("Description contains invalid characters.");
+            }
+            else
+            {
+                return description;
+            }
+        }
+    }
+
+    // Step 4: Handle Category Selection
+    private static (TransactionCategory selectedCategory, string customCategoryName) GetCategorySelection()
+    {
+        ConsoleUI.DisplayCategories();
+
+        while (true)
+        {
+            try
+            {
+                var (customCategory, category) = GetValidatedCategoryInput("\nSelect a category (1-15): ");
+                if (category == TransactionCategory.Custom)
+                {
+                    string validatedCustomCategory = ValidateCustomCategory(customCategory);
+                    return (category, validatedCustomCategory);
+                }
+                return (category, null);
+            }
+            catch (Exception ex)
+            {
+                ConsoleUI.DisplayError($"Invalid category selection: {ex.Message}");
+            }
+        }
+    }
+
+    // Helper for validating custom category
+    private static string ValidateCustomCategory(string customCategory)
+    {
+        while (true)
+        {
+            if (string.IsNullOrWhiteSpace(customCategory))
+            {
+                ConsoleUI.DisplayError("Custom category name cannot be empty.");
+                customCategory = GetValidatedStringInput("Enter a custom category name: ");
+            }
+            else if (customCategory.Length > 15)
+            {
+                ConsoleUI.DisplayError("Custom category name cannot be longer than 15 characters.");
+                customCategory = GetValidatedStringInput("Enter a custom category name: ");
+            }
+            else if (customCategory.Any(c => !char.IsLetterOrDigit(c) && c != ' ' && c != '-' && c != '_'))
+            {
+                ConsoleUI.DisplayError("Custom category can only contain letters, numbers, spaces, hyphens, and underscores.");
+                customCategory = GetValidatedStringInput("Enter a custom category name: ");
+            }
+            else
+            {
+                return customCategory;
+            }
+        }
+    }
 
 
 

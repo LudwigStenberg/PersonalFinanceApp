@@ -1,6 +1,3 @@
-
-using System.Runtime.CompilerServices;
-
 namespace PersonalFinanceApp;
 
 public class LoginManager
@@ -26,8 +23,7 @@ public class LoginManager
 
         if (_userService.AuthenticateUser(username, password))
         {
-            ConsoleUI.DisplaySuccess("Login successful...");
-            ConsoleUI.WelcomeUser(username);
+            ConsoleUI.DisplaySuccess("  Login successful...");
 
             if (_userService.CurrentUser == null)
             {
@@ -38,11 +34,9 @@ public class LoginManager
             // Fetch and cache user data
             UserTransactionDataDTO userData = await _transactionService.GetUserTransactionDataAsync(_userService.CurrentUser.UserId);
 
-            // Provide feedback based on loaded transactions
-            Console.WriteLine($"Loaded {userData.Transactions.Count} transactions.");
             if (userData.Transactions.Count > 0)
             {
-                ConsoleUI.DisplaySuccess("Data successfully loaded! Continuing...");
+                ConsoleUI.DisplaySuccess($"  Data successfully loaded: {userData.Transactions.Count} transactions.");
                 return true;
             }
 
@@ -61,7 +55,6 @@ public class LoginManager
         if (_userService.CreateAccount(username, password))
         {
             ConsoleUI.DisplaySuccess("Account creation successful!");
-            ConsoleUI.WelcomeUser(username);
             return true;
         }
 

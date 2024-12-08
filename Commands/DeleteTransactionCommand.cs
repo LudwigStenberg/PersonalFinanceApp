@@ -6,14 +6,15 @@ public class DeleteTransactionCommand : ICommand
 
     public DeleteTransactionCommand(TransactionService transactionService, int userId)
     {
-        _transactionService = transactionService ?? throw new ArgumentNullException(nameof(transactionService));
-        _userId = userId > 0 ? userId : throw new ArgumentException("User ID must be positive.", nameof(userId));
+        _transactionService = transactionService;
+        _userId = userId;
     }
 
     public async Task Execute()
     {
         try
         {
+            Console.Clear();
             // Fetch and display transactions for the user.
             var summary = await _transactionService.GetGroupedTransactionsAsync("Day", _userId);
 
@@ -23,7 +24,6 @@ public class DeleteTransactionCommand : ICommand
                 return;
             }
 
-            ConsoleUI.ClearAndWriteLine("== Remove Transaction ==\n");
             ConsoleUI.DisplayTransactionsByIndividual(summary, showIndices: true);
 
             // Get the transaction index from the user.

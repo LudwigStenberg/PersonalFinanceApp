@@ -2,9 +2,10 @@
 
 class Program
 {
-    private static ITransactionStorage _transactionStorage;
-    private static TransactionService _transactionService;
+    private static DatabaseService _dbService;
     private static UserService _userService;
+    private static TransactionService _transactionService;
+    private static ITransactionStorage _transactionStorage;
     private static LoginManager _loginManager;
     private static CommandManager _commandManager;
 
@@ -12,15 +13,12 @@ class Program
     {
         try
         {
-            Initialize();
-
+            await Initialize();
             bool isRunning = true;
             while (isRunning)
             {
                 isRunning = await RunLoginMenu();
             }
-
-            Console.WriteLine("Goodbye!");
         }
         catch (Exception ex)
         {
@@ -29,11 +27,12 @@ class Program
     }
 
 
-
-
-    static void Initialize()
+    static async Task Initialize()
     {
-        var _dbService = new DatabaseService();
+        AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+        Console.CancelKeyPress += OnCancelKeyPress;
+
+        _dbService = await DatabaseService.CreateAsync();
         _userService = new UserService(_dbService);
         _transactionStorage = new DatabaseTransactionStorage(_dbService);
         _transactionService = new TransactionService(_transactionStorage, _dbService);
@@ -41,10 +40,21 @@ class Program
         _commandManager = new CommandManager();
     }
 
+    private static void OnProcessExit(object sender, EventArgs e)
+    {
+        _dbService?.Dispose();
+    }
+
+    private static void OnCancelKeyPress(object sender, ConsoleCancelEventArgs e)
+    {
+        e.Cancel = true;
+        _dbService?.Dispose();
+        Environment.Exit(0);
+    }
 
     static async Task<bool> RunLoginMenu()
     {
-        ConsoleUI.DisplayLoginMenu();
+        ConsoleUI.DisplayStartMenu();
         ConsoleKey userChoice = Console.ReadKey(true).Key;
 
         switch (userChoice)
@@ -74,8 +84,6 @@ class Program
     static void RunMainMenu()
     {
         bool userSignedIn = true;
-
-        // Ensure commands are initialized
         _commandManager.InitializeCommands(_transactionService, _userService.CurrentUser.UserId);
 
         while (userSignedIn)
@@ -83,21 +91,26 @@ class Program
             try
             {
                 ConsoleUI.DisplayMainMenu(_transactionService);
-                ConsoleKey userChoice = Console.ReadKey().Key;
+                ConsoleKey userChoice = Console.ReadKey(true).Key;
 
+                // Handle user choice
                 switch (userChoice)
                 {
-                    case ConsoleKey.D1:
-                    case ConsoleKey.D2:
-                    case ConsoleKey.D3:
-                        _commandManager.TryExecuteCommand(userChoice);
+                    case ConsoleKey.D1: // Show Transactions
+                    case ConsoleKey.D2: // Add Income
+                    case ConsoleKey.D3: // Add Expense
+
+                        if (!_commandManager.TryExecuteCommand(userChoice))
+                        {
+                            break; // Wait for command to complete before continuing
+                        }
                         break;
 
-                    case ConsoleKey.D6:
+                    case ConsoleKey.D6: // Sign Out
                         if (_loginManager.HandleSignOut())
                         {
                             ConsoleUI.DisplaySuccess("Successfully signed out.");
-                            return;
+                            userSignedIn = false; // Exit the Main Menu loop
                         }
                         else
                         {
@@ -105,7 +118,7 @@ class Program
                         }
                         break;
 
-                    case ConsoleKey.Escape:
+                    case ConsoleKey.Escape: // Exit Program
                         Console.WriteLine("Are you sure you want to exit? (Y/N)");
                         if (Console.ReadKey(true).Key == ConsoleKey.Y)
                         {

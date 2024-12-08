@@ -12,6 +12,8 @@ public class CommandManager
 
     public void InitializeCommands(TransactionService transactionService, int userId)
     {
+        _commands.Clear();
+
         RegisterCommand(ConsoleKey.D1, new DisplayTransactionsCommand(transactionService, userId));
         RegisterCommand(ConsoleKey.D2, new AddIncomeCommand(transactionService, userId));
         RegisterCommand(ConsoleKey.D3, new AddExpenseCommand(transactionService, userId));
@@ -30,16 +32,18 @@ public class CommandManager
     }
 
 
-    public void TryExecuteCommand(ConsoleKey key)
+    public bool TryExecuteCommand(ConsoleKey key)
     {
         if (_commands.TryGetValue(key, out var command))
         {
-            command.Execute();
+            // Execute the command and allow it to manage user input
+            command.Execute().Wait();
+            return false; // Indicate the Main Menu should not process input
         }
-        else
-        {
-            ConsoleUI.DisplayError("Invalid command.");
-        }
+
+        ConsoleUI.DisplayError("Invalid command.");
+        return true; // Continue Main Menu processing on invalid command
     }
+
 
 }
