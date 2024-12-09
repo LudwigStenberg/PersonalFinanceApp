@@ -1,41 +1,35 @@
                               
-           = UPPGIFT: Integration av Databas =                         
-=========================================================
+          
+          
+               = UPPGIFT: Integration av Databas =                         
 
-Krav för G
+= Krav för G =
     Använd Git för versionshantering:
-
     Använd PostgreSQL som databas:
           - DatabaseService hanterar PostgreSQL-anslutning och tabellskapande (users, transactions)​
           - CRUD-operationer implementerade via DatabaseTransactionStorage och TransactionService​
-​
     Kontosystem
           - Registrering: UserService.CreateAccount hashar lösenord och sparar användare​
           - Inloggning: UserSessionManager.HandleSignIn autentiserar med hashade lösenord​
           - Utloggning: UserSessionManager.HandleSignOut återställer användarsessioner​
-
-Krav för VG
+= Krav för VG =
     Spara kontoinformation på ett säkert sätt (hashing av lösenord)
           - Lösenord hashas med BCrypt i UserService.CreateAccount och verifieras i UserService.AuthenticateUser​
-
     Använd SQL JOINS för datahämtning när det går
           - DatabaseTransactionStorage.LoadTransactionsAsync använder JOIN för att hämta transaktioner med användardata​.
           - TransactionService.GetGroupedTransactionsDTOAsync använder GROUP BY och hämtar kategoriserad data​
-
-Använd minst två SQL TRANSACTIONS
+    Använd minst två SQL TRANSACTIONS
           - DatabaseTransactionStorage.SaveTransactionsAsync använder BeginTransaction för batch-inserts​
           - TransactionService.DeleteTransactionsAsync säkerställer atomisk radering med SQL-transaktioner​
-
-Använd alla normalformer (1NF, 2NF, 3NF)
-        Table creation sker enligt normalformer i constructor för DatabaseService
-            
-Felhantera alla databasoperationer
-        try/catch-block hanterar fel i CRUD-metoder i TransactionService och DatabaseService​
-        using-satser säkerställer resurshantering för databasanslutningar.
+    Använd alla normalformer (1NF, 2NF, 3NF)
+          - Table creation sker enligt normalformer i constructor för DatabaseService
+    Felhantera alla databasoperationer
+          - try/catch-block hanterar fel i CRUD-metoder i TransactionService och DatabaseService​
+          - using-satser säkerställer resurshantering för databasanslutningar.
 
 
-            = EGNA TANKAR INFÖR UPPGIFTEN =                            
-=========================================================
+               = EGNA TANKAR INFÖR UPPGIFTEN =                            
+
 
 Siktar på att uppnå samtliga krav för VG men vill inte spendera för mycket tid på just detta projekt
 då jag vill testa lite egna projekt från grund när jag blir färdig. Därför kommer jag att göra val 
@@ -44,10 +38,8 @@ Fokus är på lärande inom ramen för uppgift-specifikationen, inte utanför.
 
 
                     = DOCUMENTATION =                                    
-=========================================================
-
                   SATURDAY, NOVEMBER 23                  
-=========================================================
+
 
 Added Npgsql.
 New class DatabaseManager in Services.
@@ -335,6 +327,7 @@ Transaction Deletion Service Updates
 
 
 =========================================================
+
                         = TODO =
-=========================================================
+
 - Move CurrentUser from UserService to UserSessionManager and refactor accordingly.
