@@ -1,42 +1,42 @@
                               
           
-          
-               = UPPGIFT: Integration av Databas =                         
+=========================================================
+            = UPPGIFT: Integration av Databas =                         
 
 = Krav för G =
-    Använd Git för versionshantering:
-    Använd PostgreSQL som databas:
-          - DatabaseService hanterar PostgreSQL-anslutning och tabellskapande (users, transactions)​
-          - CRUD-operationer implementerade via DatabaseTransactionStorage och TransactionService​
-    Kontosystem
-          - Registrering: UserService.CreateAccount hashar lösenord och sparar användare​
-          - Inloggning: UserSessionManager.HandleSignIn autentiserar med hashade lösenord​
-          - Utloggning: UserSessionManager.HandleSignOut återställer användarsessioner​
+Använd Git för versionshantering:
+Använd PostgreSQL som databas:
+  - DatabaseService hanterar PostgreSQL-anslutning och tabellskapande (users, transactions)​
+  - CRUD-operationer implementerade via DatabaseTransactionStorage och TransactionService​
+Kontosystem
+  - Registrering: UserService.CreateAccount hashar lösenord och sparar användare​
+  - Inloggning: UserSessionManager.HandleSignIn autentiserar med hashade lösenord​
+  - Utloggning: UserSessionManager.HandleSignOut återställer användarsessioner​
+
 = Krav för VG =
-    Spara kontoinformation på ett säkert sätt (hashing av lösenord)
-          - Lösenord hashas med BCrypt i UserService.CreateAccount och verifieras i UserService.AuthenticateUser​
-    Använd SQL JOINS för datahämtning när det går
-          - DatabaseTransactionStorage.LoadTransactionsAsync använder JOIN för att hämta transaktioner med användardata​.
-          - TransactionService.GetGroupedTransactionsDTOAsync använder GROUP BY och hämtar kategoriserad data​
-    Använd minst två SQL TRANSACTIONS
-          - DatabaseTransactionStorage.SaveTransactionsAsync använder BeginTransaction för batch-inserts​
-          - TransactionService.DeleteTransactionsAsync säkerställer atomisk radering med SQL-transaktioner​
-    Använd alla normalformer (1NF, 2NF, 3NF)
-          - Table creation sker enligt normalformer i constructor för DatabaseService
-    Felhantera alla databasoperationer
-          - try/catch-block hanterar fel i CRUD-metoder i TransactionService och DatabaseService​
-          - using-satser säkerställer resurshantering för databasanslutningar.
+Spara kontoinformation på ett säkert sätt (hashing av lösenord)
+  - Lösenord hashas med BCrypt i UserService.CreateAccount och verifieras i UserService.AuthenticateUser​
+Använd SQL JOINS för datahämtning när det går
+  - DatabaseTransactionStorage.LoadTransactionsAsync använder JOIN för att hämta transaktioner med användardata​.
+  - TransactionService.GetGroupedTransactionsDTOAsync använder GROUP BY och hämtar kategoriserad data​
+Använd minst två SQL TRANSACTIONS
+  - DatabaseTransactionStorage.SaveTransactionsAsync använder BeginTransaction för batch-inserts​
+  - TransactionService.DeleteTransactionsAsync säkerställer atomisk radering med SQL-transaktioner​
+Använd alla normalformer (1NF, 2NF, 3NF)
+   - Table creation sker enligt normalformer i constructor för DatabaseService
+Felhantera alla databasoperationer
+   - try/catch-block hanterar fel i CRUD-metoder i TransactionService och DatabaseService​
+   - using-satser säkerställer resurshantering för databasanslutningar.
 
-
-               = EGNA TANKAR INFÖR UPPGIFTEN =                            
-
+=========================================================
+              = EGNA TANKAR INFÖR UPPGIFTEN =                            
 
 Siktar på att uppnå samtliga krav för VG men vill inte spendera för mycket tid på just detta projekt
 då jag vill testa lite egna projekt från grund när jag blir färdig. Därför kommer jag att göra val 
 baserat på vad som faktiskt behövs göras och kanske inte på att förbättra programmet mer än nödvändigt. 
 Fokus är på lärande inom ramen för uppgift-specifikationen, inte utanför. 
 
-
+=========================================================
                     = DOCUMENTATION =                                    
                   SATURDAY, NOVEMBER 23                  
 
@@ -55,8 +55,8 @@ Began implementing AddUser method for adding new users to the database.
 Changed User.UserId from string to int (match DB type).
 
 
-                  MONDAY, NOVEMBER 25
 =========================================================
+                  MONDAY, NOVEMBER 25
 
 DatabaseManager.AddUser():
     - Removed created_at from the RETURNING. Not needed immediately and could retrieve it during other operations. E.g. GetUser() or something.
@@ -78,8 +78,8 @@ Added BCrypt
     - Changed User.cs Password to HashedPassword
 
 
-                  WEDNESDAY, NOVEMBER 27
 =========================================================
+                  WEDNESDAY, NOVEMBER 27
 
 Changes to DatabaseManager:
   Added SQL string for create transaction_type_enum
@@ -97,8 +97,8 @@ Changes to DatabaseManager:
     - Added logging messages (only console.writelines)
 
 
-                  FRIDAY, NOVEMBER 29
 =========================================================
+                  FRIDAY, NOVEMBER 29
 
 Added GetUserByUsername() to DatabaseManager for reading users from the DB through a query.
 
@@ -112,21 +112,21 @@ Improved DatabaseManager class:
     Implemented IDisposable + added dispose() method.
 
 
-                  SATURDAY, NOVEMBER 30
 =========================================================
+                  SATURDAY, NOVEMBER 30
 
 Changed transaction.cs TransactionId from string to int to match database. Simplicity.
 working on DatabaseTransactionStorage's LoadTransactionsAsync.
 
 
-                  SUNDAY, DECEMBER 1
 =========================================================
+                  SUNDAY, DECEMBER 1
 
 Implemented SaveTransactionsAsync for DatabaseTransactionStorage.cs
 
 
-                  MONDAY, DECEMBER 2
 =========================================================
+                  MONDAY, DECEMBER 2
 
 
 - Finalized SaveTransactionsAsync for DatabaseTransactionStorage.cs.
@@ -139,8 +139,8 @@ Renamed:
  Removed IIdGenerator.cs and TransactionIdGenerator (SERIAL for now).
 
 
-                  TUESDAY, DECEMBER 3
 =========================================================
+                  TUESDAY, DECEMBER 3
 
 
 - Removed ITransactionOperations - Replaced by combining ITransactionStorage and TransactionService.
@@ -187,8 +187,8 @@ Changes to Program.cs
     - Moved RegisterCommands() method to CommandManager and added InitializeCommands() in Program instead: Cleaner Program.
 
 
-                  WEDNESDAY, DECEMBER 4
 =========================================================
+                  WEDNESDAY, DECEMBER 4
 
 - Updated UserSessionManager to work with the new TransactionService.
 - Added a new constructor to Transaction.cs for excluding TransactionId.
@@ -202,8 +202,8 @@ Changes to Program.cs
 - Removed file saving features of SignOut() - now only resets: CurrentUser = null.
 
 
-                  THURSDAY, DECEMBER 5
 =========================================================
+                  THURSDAY, DECEMBER 5
 
 
 - Updated HandleSignOut() to align with SignOut().
@@ -216,8 +216,8 @@ Changes to Program.cs
 - Removed ITransactionUIOperations.
 
 
-                  FRIDAY, DECEMBER 6
 =========================================================
+                  FRIDAY, DECEMBER 6
 
 
 - Switched time-based in-memory logic to SQL logic for:
@@ -237,8 +237,8 @@ Changes to Program.cs
 - Tested and confirmed functionality for transaction grouping, display, and summaries.
 
 
-                   SATURDAY, DECEMBER 7
 =========================================================
+                   SATURDAY, DECEMBER 7
  
   Removed InitializeUserData and merged it into HandleSignIn
   
@@ -271,8 +271,8 @@ Changes to Program.cs
     Added robust validation and confirmation prompts for deletion actions.
 
 
-                   SUNDAY, DECEMBER 8                     
 =========================================================
+                   SUNDAY, DECEMBER 8                     
 
     CommandManager:
         Added _commands.Clear() to RegisterCommands() as a safeguard to prevent potential duplicate keys or unexpected errors during command initialization.
@@ -312,8 +312,8 @@ Transaction Deletion Service Updates
             Added helper methods.
 
 
-                   Monday, DECEMBER 9      
 =========================================================
+                   Monday, DECEMBER 9      
     
     Final touches:
       Added XML comments and regions throughout the project.
@@ -327,7 +327,6 @@ Transaction Deletion Service Updates
 
 
 =========================================================
-
                         = TODO =
 
 - Move CurrentUser from UserService to UserSessionManager and refactor accordingly.
