@@ -1,78 +1,98 @@
-namespace PersonalFinanceApp;
-
-public class UserService
+namespace PersonalFinanceApp
 {
-    private readonly DatabaseService _dbService;
-    private Dictionary<string, User> users = new Dictionary<string, User>();
-    public User CurrentUser { get; private set; }
-
-    public UserService(DatabaseService dbService)
+    /// <summary>
+    /// Service class for managing user-related operations.
+    /// </summary>
+    public class UserService
     {
-        _dbService = dbService;
-    }
+        private readonly DatabaseService _dbService;
+        private Dictionary<string, User> users = new Dictionary<string, User>();
+        public User CurrentUser { get; private set; }
 
-    public bool AddNewUser(string username, User newUser)
-    {
-        if (newUser == null || username == null || string.IsNullOrWhiteSpace(username))
+        public UserService(DatabaseService dbService)
         {
-            return false;
+            _dbService = dbService;
         }
 
-        if (users.ContainsKey(username.ToLower()))
+        #region User Management
+
+        /// <summary>
+        /// Adds a new user to the user dictionary.
+        /// </summary>
+        public bool AddNewUser(string username, User newUser)
         {
-            return false;
-        }
+            if (newUser == null || username == null || string.IsNullOrWhiteSpace(username))
+            {
+                return false;
+            }
 
-        users.Add(username.ToLower(), newUser);
-        return true;
-    }
+            if (users.ContainsKey(username.ToLower()))
+            {
+                return false;
+            }
 
-    public bool CreateAccount(string username, string password)
-    {
-        string passwordHashed = BCrypt.Net.BCrypt.HashPassword(password);
-
-        if (_dbService == null)
-        {
-            throw new InvalidOperationException("DatabaseService (_dbService) is not initialized.");
-        }
-
-        User newUser = _dbService.AddUser(username, passwordHashed);
-        if (AddNewUser(username, newUser))
-        {
-            return AuthenticateUser(username, password);
-        }
-        return false;
-    }
-
-
-    public bool AuthenticateUser(string username, string password)
-    {
-        // Read user from the DB.
-        User user = _dbService.GetUserByUsername(username);
-        if (user != null && BCrypt.Net.BCrypt.Verify(password, user.HashedPassword))
-        {
-            CurrentUser = user;
+            users.Add(username.ToLower(), newUser);
             return true;
         }
 
-        // Authentication failed.
-        return false;
-    }
-
-
-    public bool SignOut()
-    {
-        try
+        /// <summary>
+        /// Creates a new user account with the specified username and password.
+        /// </summary>
+        public bool CreateAccount(string username, string password)
         {
-            // Reset the current user session.
-            CurrentUser = null;
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error during sign-out: {ex.Message}");
+            string passwordHashed = BCrypt.Net.BCrypt.HashPassword(password);
+
+            if (_dbService == null)
+            {
+                throw new InvalidOperationException("DatabaseService (_dbService) is not initialized.");
+            }
+
+            User newUser = _dbService.AddUser(username, passwordHashed);
+            if (AddNewUser(username, newUser))
+            {
+                return AuthenticateUser(username, password);
+            }
             return false;
         }
-    }
 
+        #endregion
+
+        #region Authentication
+
+        /// <summary>
+        /// Authenticates a user by verifying the username and password.
+        /// </summary>
+        public bool AuthenticateUser(string username, string password)
+        {
+            // Read user from the DB.
+            User user = _dbService.GetUserByUsername(username);
+            if (user != null && BCrypt.Net.BCrypt.Verify(password, user.HashedPassword))
+            {
+                CurrentUser = user;
+                return true;
+            }
+
+            // Authentication failed.
+            return false;
+        }
+
+        /// <summary>
+        /// Signs out the current user and resets the session.
+        /// </summary>
+        public bool SignOut()
+        {
+            try
+            {
+                CurrentUser = null;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during sign-out: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion
+    }
 }

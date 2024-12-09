@@ -1,104 +1,116 @@
-namespace PersonalFinanceApp;
-
-public class DeleteTransactionsCommand : ICommand
+namespace PersonalFinanceApp
 {
-    private readonly TransactionService _transactionService;
-
-    public DeleteTransactionsCommand(TransactionService transactionService)
+    /// <summary>
+    /// Command to delete multiple transactions based on user-defined criteria.
+    /// </summary>
+    public class DeleteTransactionsCommand : ICommand
     {
-        _transactionService = transactionService;
-    }
+        private readonly TransactionService _transactionService;
 
-
-    public async Task Execute()
-    {
-        while (true)
+        public DeleteTransactionsCommand(TransactionService transactionService)
         {
-            ConsoleUI.ClearAndWriteLine(
-            $"""    
-            Choose the criteria for deleting transactions:
-            [1]   - By Category
-            [2]   - By Date Range
-            [Esc] - Cancel and return to the main menu
-            """);
+            _transactionService = transactionService;
+        }
 
-            var userChoice = Console.ReadKey(intercept: true).Key;
-
-            if (InputHandler.CheckForReturn(userChoice))
+        /// <summary>
+        /// Executes the process of deleting transactions based on criteria.
+        /// </summary>
+        public async Task Execute()
+        {
+            while (true)
             {
-                Console.WriteLine("\nReturning to the main menu...");
+                ConsoleUI.ClearAndWriteLine(
+                $"""    
+                Choose the criteria for deleting transactions:
+                [1]   - By Category
+                [2]   - By Date Range
+                [Esc] - Cancel and return to the main menu
+                """);
+
+                var userChoice = Console.ReadKey(intercept: true).Key;
+
+                if (InputHandler.CheckForKey(userChoice))
+                {
+                    Console.WriteLine("\nReturning to the main menu...");
+                    return;
+                }
+
+                switch (userChoice)
+                {
+                    case ConsoleKey.D1:
+                        await DeleteByCategory();
+                        break;
+                    case ConsoleKey.D2:
+                        await DeleteByDateRange();
+                        break;
+                    default:
+                        Console.WriteLine("\nInvalid choice. Please try again.");
+                        continue;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Deletes transactions by category.
+        /// </summary>
+        private async Task DeleteByCategory()
+        {
+            // Collect and validate category input
+            Console.Write("\nEnter category name:");
+            string categoryName = Console.ReadLine()?.Trim();
+            if (string.IsNullOrWhiteSpace(categoryName))
+            {
+                Console.WriteLine("Invalid category. Please try again.");
                 return;
             }
 
-            switch (userChoice)
+            // Confirm with the user and call TransactionService
+            if (ConsoleUI.GetConfirmation($"Delete all transactions for category: {categoryName}?"))
             {
-                case ConsoleKey.D1:
-                    await DeleteByCategory();
-                    break;
-                case ConsoleKey.D2:
-                    await DeleteByDateRange();
-                    break;
-                default:
-                    Console.WriteLine("\nInvalid choice. Please try again.");
-                    continue;
+                bool success = await _transactionService.DeleteTransactionsByCategoryAsync(categoryName);
+                if (success)
+                {
+                    ConsoleUI.DisplaySuccess("Transactions deleted successfully.");
+                }
+                else
+                {
+                    ConsoleUI.DisplayError("An error occurred.");
+                }
             }
         }
-    }
 
-    private async Task DeleteByCategory()
-    {
-        // Collect and validate category input
-        Console.Write("\nEnter category name:");
-        string categoryName = Console.ReadLine()?.Trim();
-        if (string.IsNullOrWhiteSpace(categoryName))
+        /// <summary>
+        /// Deletes transactions within a specified date range.
+        /// </summary>
+        private async Task DeleteByDateRange()
         {
-            Console.WriteLine("Invalid category. Please try again.");
-            return;
-        }
-
-        // Confirm with the user and call TransactionService
-        if (ConsoleUI.GetConfirmation($"Delete all transactions for category: {categoryName}?"))
-        {
-            bool success = await _transactionService.DeleteTransactionsByCategoryAsync(categoryName);
-            if (success)
+            // Collect and validate date range
+            Console.WriteLine("Enter start date (yyyy-MM-dd):");
+            if (!DateTime.TryParse(Console.ReadLine(), out DateTime startDate))
             {
-                ConsoleUI.DisplaySuccess("Transactions deleted successfully.");
+                Console.WriteLine("Invalid start date. Try again.");
+                return;
             }
-            else
+
+            Console.WriteLine("Enter end date (yyyy-MM-dd):");
+            if (!DateTime.TryParse(Console.ReadLine(), out DateTime endDate))
             {
-                ConsoleUI.DisplayError("An error occurred.");
+                Console.WriteLine("Invalid end date. Try again.");
+                return;
             }
-        }
-    }
 
-    private async Task DeleteByDateRange()
-    {
-        // Collect and validate date range
-        Console.WriteLine("Enter start date (yyyy-MM-dd):");
-        if (!DateTime.TryParse(Console.ReadLine(), out DateTime startDate))
-        {
-            Console.WriteLine("Invalid start date. Try again.");
-            return;
-        }
+            if (startDate > endDate)
+            {
+                Console.WriteLine("Start date cannot be after end date.");
+                return;
+            }
 
-        Console.WriteLine("Enter end date (yyyy-MM-dd):");
-        if (!DateTime.TryParse(Console.ReadLine(), out DateTime endDate))
-        {
-            Console.WriteLine("Invalid end date. Try again.");
-            return;
-        }
-
-        if (startDate > endDate)
-        {
-            Console.WriteLine("Start date cannot be after end date.");
-            return;
-        }
-
-        // Confirm with the user and call TransactionService
-        if (ConsoleUI.GetConfirmation($"Delete all transactions from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}?"))
-        {
-            bool success = await _transactionService.DeleteTransactionsByDateRangeAsync(startDate, endDate);
-            Console.WriteLine(success ? "Transactions deleted successfully." : "An error occurred.");
+            // Confirm with the user and call TransactionService
+            if (ConsoleUI.GetConfirmation($"Delete all transactions from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}?"))
+            {
+                bool success = await _transactionService.DeleteTransactionsByDateRangeAsync(startDate, endDate);
+                Console.WriteLine(success ? "Transactions deleted successfully." : "An error occurred.");
+            }
         }
     }
 }

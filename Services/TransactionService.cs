@@ -9,21 +9,17 @@ public class TransactionService
     private readonly DatabaseService _dbService;
     private UserTransactionDataDTO _currentUserTransactionData;
 
-
     public TransactionService(ITransactionStorage transactionStorage, DatabaseService dbService)
     {
         _transactionStorage = transactionStorage;
         _dbService = dbService;
     }
 
+    #region CRUD Operations
 
-    // ===================================================================================
-    //                            Transaction CRUD Operations
-    // ===================================================================================
     /// <summary>
     /// Adds a new transaction for the specified user.
     /// </summary>
-    /// 
     public async Task<bool> AddTransactionAsync(Transaction transaction, int userId)
     {
         try
@@ -38,7 +34,7 @@ public class TransactionService
     }
 
     /// <summary>
-    /// Removes an existing transaction for the specified user.
+    /// Deletes a transaction by its ID.
     /// </summary>
     public async Task<bool> DeleteTransactionAsync(int transactionId)
     {
@@ -63,7 +59,9 @@ public class TransactionService
         }
     }
 
-
+    /// <summary>
+    /// Deletes multiple transactions based on a list of transaction IDs.
+    /// </summary>
     public async Task<bool> DeleteTransactionsAsync(IEnumerable<int> transactionIds)
     {
         if (transactionIds == null || !transactionIds.Any())
@@ -72,142 +70,37 @@ public class TransactionService
             return false;
         }
 
-        int count = transactionIds.Count(); // Calculate count once for reuse
+        int count = transactionIds.Count();
 
         const string deleteSql = @"DELETE FROM transactions
-                               WHERE transaction_id = ANY(@TransactionIds)";
+                                   WHERE transaction_id = ANY(@TransactionIds)";
 
         await using var transaction = await _dbService.Connection.BeginTransactionAsync();
 
         try
         {
-            // Create parameters for the query
             var parameters = new Dictionary<string, object>
-        {
-            { "@TransactionIds", transactionIds.ToArray() } // Ensure parameter is an array
-        };
+            {
+                { "@TransactionIds", transactionIds.ToArray() }
+            };
 
-            // Execute the query
             await _dbService.ExecuteNonQueryAsync(deleteSql, parameters);
-
-            await transaction.CommitAsync(); // Commit the transaction
+            await transaction.CommitAsync();
             ConsoleUI.DisplaySuccess($"{count} transactions successfully deleted.");
             return true;
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync(); // Rollback on error
+            await transaction.RollbackAsync();
             ConsoleUI.DisplayError($"Error deleting transactions: {ex.Message}");
             return false;
         }
     }
 
-
-
-
-
-    // ===================================================================================
-    //                                  Utility Methods
-    // ===================================================================================
-    public async Task<UserTransactionDataDTO> GetUserTransactionDataAsync(int userId)
-    {
-        if (_currentUserTransactionData == null || _currentUserTransactionData.UserId != userId)
-        {
-            _currentUserTransactionData = await _transactionStorage.LoadTransactionsAsync(userId);
-        }
-
-        return _currentUserTransactionData;
-    }
-
-    public UserTransactionDataDTO GetCurrentUserTransactionData()
-    {
-        if (_currentUserTransactionData == null)
-        {
-            throw new InvalidOperationException("User transaction data has not been loaded.");
-        }
-        return _currentUserTransactionData;
-    }
-
-    public List<Transaction> GetOrderedTransactions()
-    {
-        try
-        {
-            UserTransactionDataDTO userData = GetCurrentUserTransactionData();
-            return userData.Transactions.OrderBy(t => t.Date).ToList();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error retrieving ordered transactions: {ex.Message}");
-            return new List<Transaction>();
-        }
-    }
-
     /// <summary>
-    /// Calculates the total income and expenses for the user.
+    /// Retrieves a summary of transactions grouped by the specified time unit.
     /// </summary>
-    public (decimal TotalIncome, decimal TotalExpenses) CalculateTotals()
-    {
-        try
-        {
-            var userData = GetCurrentUserTransactionData();
-            decimal totalIncome = userData.Transactions
-                .Where(t => t.Type == TransactionType.Income)
-                .Sum(t => t.Amount);
-
-            decimal totalExpenses = userData.Transactions
-                .Where(t => t.Type == TransactionType.Expense)
-                .Sum(t => t.Amount);
-
-            return (totalIncome, totalExpenses);
-        }
-        catch (InvalidOperationException ex)
-        {
-            Console.WriteLine($"Error calculating totals: {ex.Message}");
-            return (0, 0);
-        }
-    }
-
-
-    /// <summary>
-    /// Calculates the user's account balance (Income - Expenses).
-    /// </summary>
-    public decimal GetAccountBalance()
-    {
-        try
-        {
-            var userData = GetCurrentUserTransactionData();
-
-            decimal accountBalance = 0;
-            foreach (var t in userData.Transactions)
-            {
-                if (t.Type == TransactionType.Income)
-                {
-                    accountBalance += t.Amount;
-                }
-                else if (t.Type == TransactionType.Expense)
-                {
-                    accountBalance -= t.Amount;
-                }
-            }
-
-            return accountBalance;
-        }
-        catch (InvalidOperationException ex)
-        {
-            Console.WriteLine($"Error calculating account balance: {ex.Message}");
-            return 0;
-        }
-    }
-
-
-
-    // ===================================================================================
-    //                           Reporting and Summarization
-    // ===================================================================================
-    /// <summary>
-    /// Handles grouping and summarization of transactions.
-    /// </summary>
-    public async Task<TransactionSummaryDTO> GetGroupedTransactionsAsync(string timeUnit, int userId)
+    public async Task<TransactionSummaryDTO> GetGroupedTransactionsDTOAsync(string timeUnit, int userId)
     {
         try
         {
@@ -239,38 +132,30 @@ public class TransactionService
                 int transactionId = reader.GetInt32(1);
                 DateTime date = reader.GetDateTime(2);
 
-                // Parse 'type' (TransactionType)
-                var typeString = reader.GetString(3);
-                if (!Enum.TryParse(typeString, ignoreCase: true, out TransactionType type))
+                if (!Enum.TryParse(reader.GetString(3), ignoreCase: true, out TransactionType type))
                 {
-                    throw new ArgumentException($"Invalid transaction type: {typeString}");
+                    throw new ArgumentException($"Invalid transaction type: {reader.GetString(3)}");
                 }
 
                 decimal amount = reader.GetDecimal(4);
 
-                // Parse 'category' (TransactionCategory)
-                var categoryString = reader.GetString(5);
-                if (!Enum.TryParse(categoryString, ignoreCase: true, out TransactionCategory category))
+                if (!Enum.TryParse(reader.GetString(5), ignoreCase: true, out TransactionCategory category))
                 {
-                    throw new ArgumentException($"Invalid category: {categoryString}");
+                    throw new ArgumentException($"Invalid category: {reader.GetString(5)}");
                 }
 
                 string customCategoryName = reader.IsDBNull(6) ? null : reader.GetString(6);
                 string description = reader.IsDBNull(7) ? null : reader.GetString(7);
 
-                // Add the transaction to the appropriate group
-                if (!summary.GroupedTransactions.ContainsKey(groupKey))
+                if (!summary.GroupedTransactionsDTO.ContainsKey(groupKey))
                 {
-                    summary.GroupedTransactions[groupKey] = new List<Transaction>();
+                    summary.GroupedTransactionsDTO[groupKey] = new List<Transaction>();
                 }
 
                 var transaction = new Transaction(transactionId, date, type, amount, category, customCategoryName, description, userId);
-                summary.GroupedTransactions[groupKey].Add(transaction);
-
-                // Add transaction to the summary's flat list of transactions
+                summary.GroupedTransactionsDTO[groupKey].Add(transaction);
                 summary.Transactions.Add(transaction);
 
-                // Accumulate totals for Income and Expense
                 if (type == TransactionType.Income)
                     summary.TotalIncome += amount;
                 else if (type == TransactionType.Expense)
@@ -283,30 +168,80 @@ public class TransactionService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in GetGroupedTransactionsAsync: {ex.Message}");
+            Console.WriteLine($"Error in GetGroupedTransactionsDTOAsync: {ex.Message}");
             throw;
         }
     }
 
+    #endregion
 
-
-
-
-    // ===================================================================================
-    //                                   Helper Methods
-    // ===================================================================================
+    #region Reporting and Summarization
 
     /// <summary>
-    /// Creates a transaction object from the input DTO.
+    /// Calculates the total income and expenses for the user.
     /// </summary>
-    public Transaction CreateTransaction(TransactionInputDTO dto, TransactionType type, int userId)
+    public (decimal TotalIncome, decimal TotalExpenses) CalculateTotals()
     {
-        return new Transaction(dto.Date, type, dto.Amount, dto.Category, dto.CustomCategoryName, dto.Description, userId)
+        try
         {
-            CustomCategoryName = dto.CustomCategoryName
-        };
+            var userData = GetCurrentUserTransactionData();
+            decimal totalIncome = userData.Transactions
+                .Where(t => t.Type == TransactionType.Income)
+                .Sum(t => t.Amount);
+
+            decimal totalExpenses = userData.Transactions
+                .Where(t => t.Type == TransactionType.Expense)
+                .Sum(t => t.Amount);
+
+            return (totalIncome, totalExpenses);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"Error calculating totals: {ex.Message}");
+            return (0, 0);
+        }
     }
 
+    #endregion
+
+    #region Helper Methods
+
+    /// <summary>
+    /// Retrieves and caches transaction data for a user.
+    /// </summary>
+    public async Task<UserTransactionDataDTO> GetUserTransactionDataAsync(int userId)
+    {
+        if (_currentUserTransactionData == null || _currentUserTransactionData.UserId != userId)
+        {
+            _currentUserTransactionData = await _transactionStorage.LoadTransactionsAsync(userId);
+        }
+
+        return _currentUserTransactionData;
+    }
+
+    /// <summary>
+    /// Deletes transactions within the specified date range for the current user.
+    /// </summary>
+    public async Task<bool> DeleteTransactionsByDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        var userData = GetCurrentUserTransactionData();
+        var transactionIds = userData.Transactions
+            .Where(t => t.Date >= startDate && t.Date <= endDate)
+            .Select(t => t.TransactionId)
+            .ToList();
+
+        if (transactionIds.Count == 0)
+        {
+            ConsoleUI.DisplayError($"No transactions found in the specified date range.");
+            return false;
+        }
+
+        return await DeleteTransactionsAsync(transactionIds);
+    }
+
+    /// <summary>
+    /// Deletes transactions that match the specified category for the current user.
+    /// </summary>
     public async Task<bool> DeleteTransactionsByCategoryAsync(string categoryName)
     {
         var userData = GetCurrentUserTransactionData();
@@ -328,20 +263,28 @@ public class TransactionService
         return await DeleteTransactionsAsync(transactionIds);
     }
 
-    public async Task<bool> DeleteTransactionsByDateRangeAsync(DateTime startDate, DateTime endDate)
+    /// <summary>
+    /// Provides direct access to cached transaction data.
+    /// </summary>
+    public UserTransactionDataDTO GetCurrentUserTransactionData()
     {
-        var userData = GetCurrentUserTransactionData();
-        var transactionIds = userData.Transactions
-            .Where(t => t.Date >= startDate && t.Date <= endDate)
-            .Select(t => t.TransactionId)
-            .ToList();
-
-        if (transactionIds.Count == 0)
+        if (_currentUserTransactionData == null)
         {
-            ConsoleUI.DisplayError($"No transactions found in the specified date range.");
-            return false;
+            throw new InvalidOperationException("User transaction data has not been loaded.");
         }
-
-        return await DeleteTransactionsAsync(transactionIds);
+        return _currentUserTransactionData;
     }
+
+    /// <summary>
+    /// Creates a transaction object from the input DTO.
+    /// </summary>
+    public Transaction CreateTransaction(TransactionInputDTO dto, TransactionType type, int userId)
+    {
+        return new Transaction(dto.Date, type, dto.Amount, dto.Category, dto.CustomCategoryName, dto.Description, userId)
+        {
+            CustomCategoryName = dto.CustomCategoryName
+        };
+    }
+
+    #endregion
 }

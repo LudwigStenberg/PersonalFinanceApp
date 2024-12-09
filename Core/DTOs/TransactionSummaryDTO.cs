@@ -1,13 +1,17 @@
 ﻿namespace PersonalFinanceApp
 {
-    public class TransactionSummaryDTO // Flytta till Models? Maybe, but I don't think so.
+    /// <summary>
+    /// Represents a summary of transactions, including grouping and totals.
+    /// </summary>
+    public class TransactionSummaryDTO
     {
         public List<Transaction> Transactions { get; set; }
         public decimal TotalIncome { get; set; }
         public decimal TotalExpense { get; set; }
         public decimal NetResult { get; set; }
         public string TimeUnit { get; set; }
-        public Dictionary<DateTime, List<Transaction>> GroupedTransactions { get; set; }
+        public Dictionary<DateTime, List<Transaction>> GroupedTransactionsDTO { get; set; }
+
         public bool IsEmpty
         {
             get
@@ -20,9 +24,7 @@
         {
             Transactions = new List<Transaction>();
             TimeUnit = timeUnit;
-            GroupedTransactions = new Dictionary<DateTime, List<Transaction>>();
+            GroupedTransactionsDTO = new Dictionary<DateTime, List<Transaction>>();
         }
-
-
     }
 }

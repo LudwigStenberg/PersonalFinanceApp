@@ -11,8 +11,8 @@ Krav för G
 ​
     Kontosystem
           - Registrering: UserService.CreateAccount hashar lösenord och sparar användare​
-          - Inloggning: LoginManager.HandleLogin autentiserar med hashade lösenord​
-          - Utloggning: LoginManager.HandleSignOut återställer användarsessioner​
+          - Inloggning: UserSessionManager.HandleSignIn autentiserar med hashade lösenord​
+          - Utloggning: UserSessionManager.HandleSignOut återställer användarsessioner​
 
 Krav för VG
     Spara kontoinformation på ett säkert sätt (hashing av lösenord)
@@ -20,7 +20,7 @@ Krav för VG
 
     Använd SQL JOINS för datahämtning när det går
           - DatabaseTransactionStorage.LoadTransactionsAsync använder JOIN för att hämta transaktioner med användardata​.
-          - TransactionService.GetGroupedTransactionsAsync använder GROUP BY och hämtar kategoriserad data​
+          - TransactionService.GetGroupedTransactionsDTOAsync använder GROUP BY och hämtar kategoriserad data​
 
 Använd minst två SQL TRANSACTIONS
           - DatabaseTransactionStorage.SaveTransactionsAsync använder BeginTransaction för batch-inserts​
@@ -45,9 +45,6 @@ Siktar på att uppnå samtliga krav för VG men vill inte spendera för mycket t
 då jag vill testa lite egna projekt från grund när jag blir färdig. Därför kommer jag att göra val 
 baserat på vad som faktiskt behövs göras och kanske inte på att förbättra programmet mer än nödvändigt. 
 Fokus är på lärande inom ramen för uppgift-specifikationen, inte utanför. 
-
-
-
 
 
 =========================================================
@@ -206,7 +203,7 @@ Changes to Program.cs
                   WEDNESDAY, DECEMBER 4
 =========================================================
 
-- Updated LoginManager to work with the new TransactionService.
+- Updated UserSessionManager to work with the new TransactionService.
 - Added a new constructor to Transaction.cs for excluding TransactionId.
   
 - Disabled FileStorage part of the program for now
@@ -225,7 +222,7 @@ Changes to Program.cs
 - Updated HandleSignOut() to align with SignOut().
 - Updated HandleCreateAccount() to not include file operations.
 - Completely removed FileManager.cs and references.
-- Refactored and updated LoginManager.
+- Refactored and updated UserSessionManager.
 - Removed SaveAndExit() from Program.cs - was being used for file-saving.
 - SQL: Changed from custom enum type column to TEXT with CHECK for simplicity --> updated CreateTransactionsTableSql()
 - Removed FileTransactionStorage.
@@ -237,16 +234,16 @@ Changes to Program.cs
 
 
 - Switched time-based in-memory logic to SQL logic for:
-- PrepareTransactionDataAsync() renamed --> GetGroupedTransactionsAsync().
-- Changed TransactionSummaryDTO's dictionary (GroupedTransactions) to be of 
+- PrepareTransactionDataAsync() renamed --> GetGroupedTransactionsDTOAsync().
+- Changed TransactionSummaryDTO's dictionary (GroupedTransactionsDTO) to be of 
   type DateTime instead of string.
 - Updated FormatGroupKey to work with change above and also recreated it into a switch-expression 
 - based on different timeUnits.
 
 - Removed outdated PrepareTransactionDataAsync logic and replaced it with a new SQL-based approach in 
-  GetGroupedTransactionsAsync.
+  GetGroupedTransactionsDTOAsync.
 - Implemented dynamic SQL GROUP BY queries to handle grouping of transactions by Day, Week, Month, and Year.
-- Ensured TransactionSummaryDTO is populated with both GroupedTransactions and a flat Transactions list 
+- Ensured TransactionSummaryDTO is populated with both GroupedTransactionsDTO and a flat Transactions list 
   for consistent handling in the UI.
 - Debugged and enhanced DisplayTransactionsByIndividual using existing TransactionDateHelper methods,
   ensuring group keys are formatted correctly based on the selected time unit.
@@ -256,7 +253,7 @@ Changes to Program.cs
                    SATURDAY, DECEMBER 7
 =========================================================
  
-  Removed InitializeUserData and merged it into HandleLogin
+  Removed InitializeUserData and merged it into HandleSignIn
   
   Created UserTransactionDataDTO 
   
@@ -328,13 +325,21 @@ Transaction Deletion Service Updates
             Added helper methods.
 
 
+                   Monday, DECEMBER 9      
+=========================================================
+    
+    Final touches:
+      Added XML comments and regions throughout the project.
+      Merged CheckForExit() and CheckForReturn() into CheckForKey()
+
+    Removed GroupedTransactionsDTO.cs entirely:
+      GetGroupedTransactionsDTOAsync fulfills its role.
+
+    Fixed an issue with CurrentUser not being reset after Signout:
+      Ideally, CurrentUser should be in UserSessionManager but is now in UserService.
+
 
 =========================================================
                           TODO:
 =========================================================
-- Introduce GUID/UUID?
-- Implement Vertical Slice structure
-- Final Review and Cleanup:
-    Ensure redundant or unused code is removed.
-      E.g. InputHandler.CheckForExit
-    Double-check for consistent UI and error handling.
+- Move CurrentUser from UserService to UserSessionManager and refactor accordingly.

@@ -1,23 +1,24 @@
-﻿namespace PersonalFinanceApp;
-
-public enum TransactionCategory
+﻿namespace PersonalFinanceApp
 {
-    // Lägg till Pay, Salary eller liknande.
-    Rent,
-    Food,
-    Gym,
-    Utilities,
-    Loan,
-    Clothing,
-    Insurance,
-    Savings,
-    Entertainment,
-    Healthcare,
-    Supplies,
-    Other,
-    Transportation,
-    Education,
-    Custom,
-
-
+    /// <summary>
+    /// Defines categories for transactions.
+    /// </summary>
+    public enum TransactionCategory
+    {
+        Rent,
+        Food,
+        Gym,
+        Utilities,
+        Loan,
+        Clothing,
+        Insurance,
+        Savings,
+        Entertainment,
+        Healthcare,
+        Supplies,
+        Other,
+        Transportation,
+        Education,
+        Custom,
+    }
 }

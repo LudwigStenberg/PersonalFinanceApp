@@ -1,12 +1,16 @@
 ﻿namespace PersonalFinanceApp;
 
+/// <summary>
+/// Entry point for the Personal Finance App. 
+/// Initializes the application, manages user sessions, and handles menus.
+/// </summary>
 class Program
 {
     private static DatabaseService _dbService;
     private static UserService _userService;
     private static TransactionService _transactionService;
     private static ITransactionStorage _transactionStorage;
-    private static LoginManager _loginManager;
+    private static UserSessionManager _userSessionManager;
     private static CommandManager _commandManager;
 
     static async Task Main(string[] args)
@@ -14,10 +18,11 @@ class Program
         try
         {
             await Initialize();
+
             bool isRunning = true;
             while (isRunning)
             {
-                isRunning = await RunLoginMenu();
+                isRunning = await RunLoginMenu(); // Show Login Menu
             }
         }
         catch (Exception ex)
@@ -26,7 +31,11 @@ class Program
         }
     }
 
+    #region Initialization
 
+    /// <summary>
+    /// Sets up database services, user management, and session handling.
+    /// </summary>
     static async Task Initialize()
     {
         AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
@@ -36,9 +45,13 @@ class Program
         _userService = new UserService(_dbService);
         _transactionStorage = new DatabaseTransactionStorage(_dbService);
         _transactionService = new TransactionService(_transactionStorage, _dbService);
-        _loginManager = new LoginManager(_userService, _commandManager, _transactionService, _transactionStorage);
         _commandManager = new CommandManager();
+        _userSessionManager = new UserSessionManager(_userService, _commandManager, _transactionService, _transactionStorage);
     }
+
+    #endregion
+
+    #region Event Handlers
 
     private static void OnProcessExit(object sender, EventArgs e)
     {
@@ -52,6 +65,14 @@ class Program
         Environment.Exit(0);
     }
 
+    #endregion
+
+    #region Menus
+
+    /// <summary>
+    /// Displays the login menu and processes user input for login or account creation.
+    /// </summary>
+    /// <returns>A boolean indicating whether the application should continue running.</returns>
     static async Task<bool> RunLoginMenu()
     {
         ConsoleUI.DisplayStartMenu();
@@ -59,20 +80,23 @@ class Program
 
         switch (userChoice)
         {
-            case ConsoleKey.D1:
-                if (await _loginManager.HandleLogin())
+            case ConsoleKey.D1: // Sign In
+                if (await _userSessionManager.HandleSignIn())
                 {
-                    RunMainMenu();
+                    await RunMainMenu();
                 }
                 break;
-            case ConsoleKey.D2:
-                if (_loginManager.HandleCreateAccount())
+
+            case ConsoleKey.D2: // Create Account
+                if (_userSessionManager.HandleCreateAccount())
                 {
-                    RunMainMenu();
+                    await RunMainMenu();
                 }
                 break;
+
             case ConsoleKey.Escape:
                 return false;
+
             default:
                 ConsoleUI.DisplayError("Invalid input.", 800);
                 break;
@@ -81,7 +105,10 @@ class Program
         return true;
     }
 
-    static void RunMainMenu()
+    /// <summary>
+    /// Displays the transaction menu after login and processes user actions.
+    /// </summary>
+    static async Task RunMainMenu()
     {
         bool userSignedIn = true;
         _commandManager.InitializeCommands(_transactionService, _userService.CurrentUser.UserId);
@@ -90,27 +117,25 @@ class Program
         {
             try
             {
-                ConsoleUI.DisplayMainMenu(_transactionService);
+                ConsoleUI.DisplayMainMenu(_userService);
                 ConsoleKey userChoice = Console.ReadKey(true).Key;
 
-                // Handle user choice
                 switch (userChoice)
                 {
                     case ConsoleKey.D1: // Show Transactions
                     case ConsoleKey.D2: // Add Income
                     case ConsoleKey.D3: // Add Expense
-
-                        if (!_commandManager.TryExecuteCommand(userChoice))
+                        if (!await _commandManager.TryExecuteCommandAsync(userChoice))
                         {
-                            break; // Wait for command to complete before continuing
+                            break; // Continue on failure
                         }
                         break;
 
                     case ConsoleKey.D6: // Sign Out
-                        if (_loginManager.HandleSignOut())
+                        if (_userSessionManager.HandleSignOut())
                         {
                             ConsoleUI.DisplaySuccess("Successfully signed out.");
-                            userSignedIn = false; // Exit the Main Menu loop
+                            userSignedIn = false; // Exit the loop after signing out
                         }
                         else
                         {
@@ -137,5 +162,6 @@ class Program
             }
         }
     }
-}
 
+    #endregion
+}
