@@ -1,332 +1,105 @@
-                              
-          
-=========================================================
-            = UPPGIFT: Integration av Databas =                         
+# UPPGIFT: Integration av Databas
+
+## Krav för G
+- **Använd Git för versionshantering**  
+- **Använd PostgreSQL som databas**:
+  - `DatabaseService` hanterar PostgreSQL-anslutning och tabellskapande (`users`, `transactions`).
+  - CRUD-operationer implementerade via `DatabaseTransactionStorage` och `TransactionService`.
+- **Kontosystem**:
+  - Registrering: `UserService.CreateAccount` hashar lösenord och sparar användare.
+  - Inloggning: `UserSessionManager.HandleSignIn` autentiserar med hashade lösenord.
+  - Utloggning: `UserSessionManager.HandleSignOut` återställer användarsessioner.
+
+## Krav för VG
+- **Spara kontoinformation på ett säkert sätt (hashing av lösenord)**:
+  - Lösenord hashas med BCrypt i `UserService.CreateAccount` och verifieras i `UserService.AuthenticateUser`.
+- **Använd SQL JOINS för datahämtning när det går**:
+  - `DatabaseTransactionStorage.LoadTransactionsAsync` använder JOIN för att hämta transaktioner med användardata.
+  - `TransactionService.GetGroupedTransactionsDTOAsync` använder GROUP BY för kategoriserad data.
+- **Använd minst två SQL TRANSACTIONS**:
+  - `DatabaseTransactionStorage.SaveTransactionsAsync` använder transaktioner för batchinserts.
+  - `TransactionService.DeleteTransactionsAsync` säkerställer atomisk radering med SQL-transaktioner.
+- **Använd alla normalformer (1NF, 2NF, 3NF)**:
+  - Tabellskapande följer normalformer i `DatabaseService`.
+- **Felhantera alla databasoperationer**:
+  - `try/catch`-block hanterar fel i CRUD-metoder i `TransactionService` och `DatabaseService`.
+  - `using`-satser säkerställer resurshantering för databasanslutningar.
+
+---
+
+# Egna tankar inför uppgiften
+
+Siktar på att uppnå alla krav för VG, men vill inte lägga mer tid än nödvändigt på projektet. 
+Mitt fokus ligger på att lära mig inom ramen för uppgiftens specifikation. När detta är klart 
+planerar jag att utforska egna projekt från grunden
+
+---
+
+# Development Log
+
+### November 23 (Saturday)
+- Added **Npgsql** package.
+- Created `DatabaseManager` class.
+- Set up connection specs and SQL table creation for `users`.
+- Began implementing `AddUser` method to add new users, using SQL `RETURNING`.
+- Updated `User.UserId` from `string` to `int` to match DB type.
+
+### November 25 (Monday)
+- Refactored `DatabaseManager.AddUser` to improve error handling.
+- Added `try/catch` in `Main` for testing `AddUser`.
+- Incorporated BCrypt for secure password handling in `UserService`.
+
+### November 27 (Wednesday)
+- Added `transaction_type_enum` and `transactions` tables.
+- Refactored SQL commands into constant fields for clarity.
+- Simplified database initialization in `DatabaseManager`.
+
+### November 29 (Friday)
+- Added `GetUserByUsername` to `DatabaseManager` for retrieving users.
+- Refactored `AuthenticateUser` to fetch user data from the database.
+
+### November 30 (Saturday)
+- Updated `Transaction.TransactionId` from `string` to `int`.
+
+### December 1 (Sunday)
+- Implemented `SaveTransactionsAsync` in `DatabaseTransactionStorage`.
+
+### December 2 (Monday)
+- Finalized `SaveTransactionsAsync` with SQL transactions.
+- Renamed core services for consistency:
+  - `DatabaseManager` → `DatabaseService`
+  - `TransactionManager` → `TransactionService`
+  - `UserManager` → `UserService`.
+
+### December 3 (Tuesday)
+- Consolidated transaction logic into `TransactionService`.
+- Updated UI and command-handling methods for better structure.
+
+### December 4 (Wednesday)
+- Improved session handling in `UserSessionManager`.
+- Temporarily disabled file storage functionality.
+
+### December 5 (Thursday)
+- Removed legacy file storage features.
+- Updated SQL to replace custom enums with `TEXT` and `CHECK` constraints.
+
+### December 6 (Friday)
+- Refactored transaction grouping logic with dynamic SQL `GROUP BY` queries.
+- Improved DTOs for handling grouped transaction data.
+
+### December 7 (Saturday)
+- Introduced cached transaction data for reduced database queries.
+- Added batch transaction deletion functionality with robust UI prompts.
+
+### December 8 (Sunday)
+- Enhanced SQL execution methods with better parameter handling.
+- Improved cleanup handlers for process termination.
+
+### December 9 (Monday)
+- Finalized project with XML comments and cleanup.
+- Merged repetitive methods and removed redundant DTOs.
+
+---
 
-= Krav för G =
-Använd Git för versionshantering:
-Använd PostgreSQL som databas:
-  - DatabaseService hanterar PostgreSQL-anslutning och tabellskapande (users, transactions)​
-  - CRUD-operationer implementerade via DatabaseTransactionStorage och TransactionService​
-Kontosystem
-  - Registrering: UserService.CreateAccount hashar lösenord och sparar användare​
-  - Inloggning: UserSessionManager.HandleSignIn autentiserar med hashade lösenord​
-  - Utloggning: UserSessionManager.HandleSignOut återställer användarsessioner​
-
-= Krav för VG =
-Spara kontoinformation på ett säkert sätt (hashing av lösenord)
-  - Lösenord hashas med BCrypt i UserService.CreateAccount och verifieras i UserService.AuthenticateUser​
-Använd SQL JOINS för datahämtning när det går
-  - DatabaseTransactionStorage.LoadTransactionsAsync använder JOIN för att hämta transaktioner med användardata​.
-  - TransactionService.GetGroupedTransactionsDTOAsync använder GROUP BY och hämtar kategoriserad data​
-Använd minst två SQL TRANSACTIONS
-  - DatabaseTransactionStorage.SaveTransactionsAsync använder BeginTransaction för batch-inserts​
-  - TransactionService.DeleteTransactionsAsync säkerställer atomisk radering med SQL-transaktioner​
-Använd alla normalformer (1NF, 2NF, 3NF)
-   - Table creation sker enligt normalformer i constructor för DatabaseService
-Felhantera alla databasoperationer
-   - try/catch-block hanterar fel i CRUD-metoder i TransactionService och DatabaseService​
-   - using-satser säkerställer resurshantering för databasanslutningar.
-
-=========================================================
-              = EGNA TANKAR INFÖR UPPGIFTEN =                            
-
-Siktar på att uppnå samtliga krav för VG men vill inte spendera för mycket tid på just detta projekt
-då jag vill testa lite egna projekt från grund när jag blir färdig. Därför kommer jag att göra val 
-baserat på vad som faktiskt behövs göras och kanske inte på att förbättra programmet mer än nödvändigt. 
-Fokus är på lärande inom ramen för uppgift-specifikationen, inte utanför. 
-
-=========================================================
-                    = DOCUMENTATION =                                    
-                  SATURDAY, NOVEMBER 23                  
-
-
-Added Npgsql.
-New class DatabaseManager in Services.
-
-Set up connection specs and constructor for dbManager.
-    - sql table creation for users.
-
-Experimenting with a wrapper method for the NpgsqlCommand.ExecuteNonQueryAsync-method.
-    - Unsure how this will work with SQL-injection. Will be mindful.
-
-Began implementing AddUser method for adding new users to the database.
-    - Uses SQL RETURNING to retrieve user_id and created_at(?) (generated by the DB)
-Changed User.UserId from string to int (match DB type).
-
-
-=========================================================
-                  MONDAY, NOVEMBER 25
-
-DatabaseManager.AddUser():
-    - Removed created_at from the RETURNING. Not needed immediately and could retrieve it during other operations. E.g. GetUser() or something.
-    - Additional error handling: Guard clause Null/WS and TryCatchThrow
-
-Added try/catch to Main for testing AddUser when resolved errors from changing UserId from string to int.
-
-Refactoring UserService (userId)
-    - removed LoadUsers' int parsing
-    - removed GenerateUserId method and its calling in CreateAccount.
-    - added private readonly field _dbManager
-
-Tested Hardcoded username and password. Works with the database.
-Added _dbManager instance to Initialize() - keeping it this way unless it is needed in more places across Program, then I might make it a field.
-
-Added BCrypt
-    - Fixed CreateAccount to hash password
-    - Fixed AuthenticateUser to check against hashedPassword instead
-    - Changed User.cs Password to HashedPassword
-
-
-=========================================================
-                  WEDNESDAY, NOVEMBER 27
-
-Changes to DatabaseManager:
-  Added SQL string for create transaction_type_enum
-  Added SQL string for create transactions table
-    - Included ON DELETE CASCADE to preserve referential integrity upon deletion of a user.
- 
-  Isolated each SQL-command to call their own ExecuteNonQueryAsync()
-    - Why? Debugging and maintainability.
-
-  Moved the SQL string commands to be initialized as constant fields.
-    - Cleaner constructor, better performance, static and immutable.
-
-  Created InitializeDatabase() to further simplify the constructor
-    - Executes the SQL commands
-    - Added logging messages (only console.writelines)
-
-
-=========================================================
-                  FRIDAY, NOVEMBER 29
-
-Added GetUserByUsername() to DatabaseManager for reading users from the DB through a query.
-
-Adjusted AuthenticateUser to instead of relying on the Dictionary users (loaded from file)
-
-it now uses the above GetUser method to retrieve the user and let BCrypt verify the inputted 
-password against the hashed pw.
-
-Improved DatabaseManager class:
-    DatabaseManager.AddUser() - changed from ExecuteReader to ExecuteScalar for RETURNING user_id (single value).
-    Implemented IDisposable + added dispose() method.
-
-
-=========================================================
-                  SATURDAY, NOVEMBER 30
-
-Changed transaction.cs TransactionId from string to int to match database. Simplicity.
-working on DatabaseTransactionStorage's LoadTransactionsAsync.
-
-
-=========================================================
-                  SUNDAY, DECEMBER 1
-
-Implemented SaveTransactionsAsync for DatabaseTransactionStorage.cs
-
-
-=========================================================
-                  MONDAY, DECEMBER 2
-
-
-- Finalized SaveTransactionsAsync for DatabaseTransactionStorage.cs.
-  - Added sql-transaction with transaction object through: BeginTransaction, Commit and Rollback.
-Renamed:
-- DatabaseManager    --> DatabaseService
-- TransactionManager --> TransactionService
-- UserService        --> UserService
-
- Removed IIdGenerator.cs and TransactionIdGenerator (SERIAL for now).
-
-
-=========================================================
-                  TUESDAY, DECEMBER 3
-
-
-- Removed ITransactionOperations - Replaced by combining ITransactionStorage and TransactionService.
-
-- Refactor TransactionService to use ITransactionStorage:
-  Removed:
-    - in-memory _transactions list.
-    - InitializeTransactions() as the functionality is handled by LoadTransactionsAsync().
-  Fixed:
-    - AddTransactionAsync()
-    - RemoveTransactionAsync()
-    - GetCurrentUserTransactionsAsync()
-    - GetTransactionCountAsync()
-    - GetOrderedTransactionsAsync()
-    - CalculateTotalsAsync()
-    - GetAccountBalanceAsync()
-    - PrepareTransactionsAsync()
-    - CreateTransactionAsync()
-  Added:
-    - Experimented with XML-comments and separators, better class structure.
-
-Updated affected components from modifications to TransactionService.cs:
-  - Completely refactored all of the commands. 
-  - Decoupled UserService from AddIncome/ExpenseCommands by only injecting UserId instead of the entire UserService.
-
-Changes to ConsoleUI.cs
-   Created:
-      - ConsoleUI.ClearAndWriteLine()
-      - DisplayMenuAndGetChoice():  For use in DisplayTransactionsCommand (and possibly in other places).
-      - DisplayToggleViewMessage(): SoC to simplify DisplayTransactionCommand.
-      - GetTransactionForRemovalIndex(): Displays transactions with indices for removal and gets user input.
-   Updated:
-      - ConsoleUI.DisplayError/Success to use Thread.Sleep.
-      - DisplayDashboard()
-
-Updated affected components from modifications to TransactionService.cs:
-  - Completely refactored all of the commands. 
-  - Decoupled UserService from AddIncome/ExpenseCommands by only injecting UserId instead of the entire UserService.
-
-Changes to Program.cs
-   Updated:
-    - RunMainMenu() to use DisplayMenuAndGetChoice()
-    - RunLoginMenu() to use DisplayMenuAndGetChoice()
-    - Moved RegisterCommands() method to CommandManager and added InitializeCommands() in Program instead: Cleaner Program.
-
-
-=========================================================
-                  WEDNESDAY, DECEMBER 4
-
-- Updated UserSessionManager to work with the new TransactionService.
-- Added a new constructor to Transaction.cs for excluding TransactionId.
-  
-- Disabled FileStorage part of the program for now
-  Reason: Due to overreaching with my refactoring in preparation for database-integration 
-          without sufficient testing there were multiple issues with the current combination
-          of FileStorage and DatabaseStorage.
-
-- Removed ITransactionStorage implementation from FileTransactionStorage (for now)
-- Removed file saving features of SignOut() - now only resets: CurrentUser = null.
-
-
-=========================================================
-                  THURSDAY, DECEMBER 5
-
-
-- Updated HandleSignOut() to align with SignOut().
-- Updated HandleCreateAccount() to not include file operations.
-- Completely removed FileManager.cs and references.
-- Refactored and updated UserSessionManager.
-- Removed SaveAndExit() from Program.cs - was being used for file-saving.
-- SQL: Changed from custom enum type column to TEXT with CHECK for simplicity --> updated CreateTransactionsTableSql()
-- Removed FileTransactionStorage.
-- Removed ITransactionUIOperations.
-
-
-=========================================================
-                  FRIDAY, DECEMBER 6
-
-
-- Switched time-based in-memory logic to SQL logic for:
-- PrepareTransactionDataAsync() renamed --> GetGroupedTransactionsDTOAsync().
-- Changed TransactionSummaryDTO's dictionary (GroupedTransactionsDTO) to be of 
-  type DateTime instead of string.
-- Updated FormatGroupKey to work with change above and also recreated it into a switch-expression 
-- based on different timeUnits.
-
-- Removed outdated PrepareTransactionDataAsync logic and replaced it with a new SQL-based approach in 
-  GetGroupedTransactionsDTOAsync.
-- Implemented dynamic SQL GROUP BY queries to handle grouping of transactions by Day, Week, Month, and Year.
-- Ensured TransactionSummaryDTO is populated with both GroupedTransactionsDTO and a flat Transactions list 
-  for consistent handling in the UI.
-- Debugged and enhanced DisplayTransactionsByIndividual using existing TransactionDateHelper methods,
-  ensuring group keys are formatted correctly based on the selected time unit.
-- Tested and confirmed functionality for transaction grouping, display, and summaries.
-
-
-=========================================================
-                   SATURDAY, DECEMBER 7
- 
-  Removed InitializeUserData and merged it into HandleSignIn
-  
-  Created UserTransactionDataDTO 
-  
-  Created wrapper methods for data retrieval:
-      - GetUserTransactionDataAsync()   --> retrieves and caches transaction data for a user.
-      - GetCurrentUserTransactionData() --> provides direct access to cached data so that.
-            - Previously, methods like GetTransactionCount(), RemoveTransactionAsync() called
-            on LoadTransactionsAsync to retrieve from the database. These have been refactored 
-            to use the cached data instead.
-  
-  Updated methods to work with the cached data to reduce the number of database queries.
-      - GetOrderedTransactions
-      - CalculateTotals
-      - GetAccountBalance
-
-  Created: DeleteTransactionsCommand for batch deletion based on criteria e.g., category or date range (uses sql tx).
-     - Renamed RemoveTransactionCommand --> DeleteTransactionCommand for single deletion.
-  
-  Refactored Command Handling:
-    Integrated DeleteTransactionCommand and DeleteTransactionsCommand into DisplayTransactionsCommand instead of the main menu.
-
-  Updated CommandManager:
-    Registered new commands (DeleteTransactionCommand and DeleteTransactionsCommand).
-    Removed transaction deletion commands from the main menu logic.
-
-  Improved User Experience:
-    Enhanced menu display in DisplayTransactionsCommand with options for single and batch deletion.
-    Added robust validation and confirmation prompts for deletion actions.
-
-
-=========================================================
-                   SUNDAY, DECEMBER 8                     
-
-    CommandManager:
-        Added _commands.Clear() to RegisterCommands() as a safeguard to prevent potential duplicate keys or unexpected errors during command initialization.
-
-    Batch Transaction Deletion (DeleteTransactionsCommand)
-    
-    Refactored DeleteTransactionsCommand.cs:
-        Improved structure by introducing a new switch statement for better readability and maintainability.
-        Ensured proper parameter handling for SQL queries.
-
-Single Transaction Deletion (DeleteTransactionCommand)
-
-    Updated DeleteTransactionCommand.cs:
-        Integrated the _dbService.ExecuteNonQueryAsync() wrapper method for SQL execution.
-        Enhanced safety and readability by relying on parameterized SQL queries.
-
-Database Service Updates
-
-    Enhanced _dbService.ExecuteNonQueryAsync():
-        Added support for parameter handling to allow secure and flexible SQL execution.
-
-Transaction Deletion Service Updates
-
-    Updated DeleteTransactionAsync() and DeleteTransactionsAsync():
-        Replaced in-memory logic with calls to the updated _dbService.ExecuteNonQueryAsync() wrapper.
-        Added SQL transactions (BeginTransactionAsync, CommitAsync, and RollbackAsync) to DeleteTransactionsAsync() for ensuring atomic operations.
-
-    Improved Dispose handling.
-        Added cleanup handlers (events) for disposing upon Exits including CTRL+C.
-            OnProcessExit and OnCancelKeyPress
-    
-    DatabaseService.cs
-        Implemented a factory method in order for be able to handle InitializeDatabaseAsync.
-
-    InputHandler.cs
-        Refactored the very long method GetTransactionInput():
-            Added helper methods.
-
-
-=========================================================
-                   Monday, DECEMBER 9      
-    
-    Final touches:
-      Added XML comments and regions throughout the project.
-      Merged CheckForExit() and CheckForReturn() into CheckForKey()
-
-    Removed GroupedTransactionsDTO.cs entirely:
-      GetGroupedTransactionsDTOAsync fulfills its role.
-
-    Fixed an issue with CurrentUser not being reset after Signout:
-      Ideally, CurrentUser should be in UserSessionManager but is now in UserService.
-
-
-=========================================================
-                        = TODO =
-
-- Move CurrentUser from UserService to UserSessionManager and refactor accordingly.
+# TODO
+- Move `CurrentUser` from `UserService` to `UserSessionManager` och refactor accordingly.
