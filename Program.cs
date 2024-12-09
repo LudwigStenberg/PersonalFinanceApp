@@ -1,140 +1,153 @@
-﻿using PersonalFinanceApp.Services.Implementation;
+﻿namespace PersonalFinanceApp;
 
-namespace PersonalFinanceApp;
-
+/// <summary>
+/// Entry point for the Personal Finance App. 
+/// Initializes the application, manages user sessions, and handles menus.
+/// </summary>
 class Program
 {
-    private static CommandManager _commandManager;
-    private static UserManager _userManager;
-    private static FileManager _fileManager;
+    private static DatabaseService _dbService;
+    private static UserService _userService;
+    private static TransactionService _transactionService;
     private static ITransactionStorage _transactionStorage;
-    private static TransactionManager _transactionManager;
-    private static LoginManager _loginManager;
+    private static UserSessionManager _userSessionManager;
+    private static CommandManager _commandManager;
 
     static async Task Main(string[] args)
     {
-        await Initialize();
-        RegisterCommands();
-
-        bool isRunning = true;
-        while (isRunning)
+        try
         {
-            isRunning = await RunLoginMenu();
-        }
+            await Initialize();
 
-        await SaveAndExit();
+            bool isRunning = true;
+            while (isRunning)
+            {
+                isRunning = await RunLoginMenu(); // Show Login Menu
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An unexpected error occurred: {ex}");
+        }
     }
 
+    #region Initialization
+
+    /// <summary>
+    /// Sets up database services, user management, and session handling.
+    /// </summary>
     static async Task Initialize()
     {
-        _fileManager = new FileManager();
-        _fileManager.EnsureUserDataDirectoryExists();
+        AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+        Console.CancelKeyPress += OnCancelKeyPress;
 
-        List<User> loadedUsers = await _fileManager.LoadUsersAsync();
-        int highestUserId = loadedUsers.Count > 0
-            ? loadedUsers.Max(u => int.Parse(u.UserId.Substring(4)))
-            : 0;
-
-        _userManager = new UserManager(highestUserId);
-        _userManager.LoadUsers(loadedUsers);
-
-        IIdGenerator idGenerator = new TransactionIdGenerator();
-        _transactionStorage = new FileTransactionStorage(_fileManager);
-        _transactionManager = new TransactionManager(idGenerator, _transactionStorage);
-        _loginManager = new LoginManager(_userManager, _fileManager, _transactionManager, _transactionStorage);
+        _dbService = await DatabaseService.CreateAsync();
+        _userService = new UserService(_dbService);
+        _transactionStorage = new DatabaseTransactionStorage(_dbService);
+        _transactionService = new TransactionService(_transactionStorage, _dbService);
+        _commandManager = new CommandManager();
+        _userSessionManager = new UserSessionManager(_userService, _commandManager, _transactionService, _transactionStorage);
     }
 
+    #endregion
+
+    #region Event Handlers
+
+    private static void OnProcessExit(object sender, EventArgs e)
+    {
+        _dbService?.Dispose();
+    }
+
+    private static void OnCancelKeyPress(object sender, ConsoleCancelEventArgs e)
+    {
+        e.Cancel = true;
+        _dbService?.Dispose();
+        Environment.Exit(0);
+    }
+
+    #endregion
+
+    #region Menus
+
+    /// <summary>
+    /// Displays the login menu and processes user input for login or account creation.
+    /// </summary>
+    /// <returns>A boolean indicating whether the application should continue running.</returns>
     static async Task<bool> RunLoginMenu()
     {
-        Console.Clear();
-        Console.WriteLine("1.   - Sign in");
-        Console.WriteLine("2.   - Create Account");
-        Console.WriteLine("Esc. - Exit Application");
-        ConsoleKeyInfo choice = Console.ReadKey(true);
+        ConsoleUI.DisplayStartMenu();
+        ConsoleKey userChoice = Console.ReadKey(true).Key;
 
-        switch (choice.Key)
+        switch (userChoice)
         {
-            case ConsoleKey.D1:
-                if (await _loginManager.HandleLogin())
+            case ConsoleKey.D1: // Sign In
+                if (await _userSessionManager.HandleSignIn())
                 {
                     await RunMainMenu();
                 }
                 break;
-            case ConsoleKey.D2:
-                if (await _loginManager.HandleCreateAccount())
+
+            case ConsoleKey.D2: // Create Account
+                if (_userSessionManager.HandleCreateAccount())
                 {
                     await RunMainMenu();
                 }
                 break;
+
             case ConsoleKey.Escape:
                 return false;
+
             default:
-                ConsoleUI.DisplayError("Invalid input.");
-                Thread.Sleep(1500);
+                ConsoleUI.DisplayError("Invalid input.", 800);
                 break;
         }
 
         return true;
     }
 
+    /// <summary>
+    /// Displays the transaction menu after login and processes user actions.
+    /// </summary>
     static async Task RunMainMenu()
     {
         bool userSignedIn = true;
+        _commandManager.InitializeCommands(_transactionService, _userService.CurrentUser.UserId);
+
         while (userSignedIn)
         {
             try
             {
-                ConsoleUI.DisplayDashboard(_transactionManager);
-                Console.WriteLine("\n1.   - Show Transactions");
-                Console.WriteLine("2.   - Add Income");
-                Console.WriteLine("3.   - Add Expense ");
-                Console.WriteLine("4.   - Sign out");
-                Console.WriteLine("Esc. - Exit Program");
+                ConsoleUI.DisplayMainMenu(_userService);
+                ConsoleKey userChoice = Console.ReadKey(true).Key;
 
-                if (_userManager.CurrentUser != null)
+                switch (userChoice)
                 {
-                    Console.WriteLine($"\nLogged in as: {_userManager.CurrentUser.Username}");
-                }
-
-                ConsoleKeyInfo userChoice = Console.ReadKey(true);
-
-                switch (userChoice.Key)
-                {
-                    case ConsoleKey.D1:
-                    case ConsoleKey.D2:
-                    case ConsoleKey.D3:
-                        _commandManager.ExecuteCommand(userChoice.Key);
+                    case ConsoleKey.D1: // Show Transactions
+                    case ConsoleKey.D2: // Add Income
+                    case ConsoleKey.D3: // Add Expense
+                        if (!await _commandManager.TryExecuteCommandAsync(userChoice))
+                        {
+                            break; // Continue on failure
+                        }
                         break;
 
-                    case ConsoleKey.D4:
-                        if (await _loginManager.HandleSignOut())
+                    case ConsoleKey.D6: // Sign Out
+                        if (_userSessionManager.HandleSignOut())
                         {
                             ConsoleUI.DisplaySuccess("Successfully signed out.");
-                            return;
+                            userSignedIn = false; // Exit the loop after signing out
                         }
                         else
                         {
-                            ConsoleUI.DisplayError("There was an error while signing out. Some data might not have been saved.");
-
+                            ConsoleUI.DisplayError("Error while signing out.");
                         }
                         break;
 
-                    case ConsoleKey.Escape:
-                        Console.WriteLine("\nAre you sure you want to exit the program? (Y/N)");
+                    case ConsoleKey.Escape: // Exit Program
+                        Console.WriteLine("Are you sure you want to exit? (Y/N)");
                         if (Console.ReadKey(true).Key == ConsoleKey.Y)
                         {
-                            if (await _loginManager.HandleSignOut())
-                            {
-                                await SaveAndExit();
-                                ConsoleUI.DisplaySuccess("All data saved. Goodbye!");
-                                Thread.Sleep(2500);
-                                Environment.Exit(0);
-                            }
-                            else
-                            {
-                                ConsoleUI.DisplayError("Error saving data before exit.");
-
-                            }
+                            Environment.Exit(0);
                         }
                         break;
 
@@ -143,41 +156,12 @@ class Program
                         break;
                 }
             }
-            catch (IOException ex)
-            {
-                ConsoleUI.DisplayError($"File operation error: {ex.Message}");
-                await SaveAndExit();
-            }
             catch (Exception ex)
             {
                 ConsoleUI.DisplayError($"An unexpected error occurred: {ex.Message}");
-                await SaveAndExit();
             }
         }
     }
 
-    private static void RegisterCommands() // Move to C.M?
-    {
-        _commandManager = new CommandManager();
-        _commandManager.RegisterCommand(ConsoleKey.D1,
-            new DisplayTransactionsCommand(_transactionManager, _userManager));
-        _commandManager.RegisterCommand(ConsoleKey.D2,
-            new AddIncomeCommand(_transactionManager, _userManager));
-        _commandManager.RegisterCommand(ConsoleKey.D3,
-            new AddExpenseCommand(_transactionManager, _userManager));
-        _commandManager.RegisterCommand(ConsoleKey.D6,
-            new RemoveTransactionCommand(_transactionManager, _userManager));
-    }
-
-    static async Task SaveAndExit()
-    {
-        if (_userManager.CurrentUser != null)
-        {
-            string userId = _userManager.CurrentUser.UserId;
-            List<Transaction> transactions = _transactionManager.GetCurrentUserTransactions(userId);
-
-            await _transactionStorage.SaveTransactionsAsync(transactions, userId);
-            await _fileManager.SaveUsersAsync(_userManager);
-        }
-    }
+    #endregion
 }

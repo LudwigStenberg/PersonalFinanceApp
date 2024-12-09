@@ -1,8 +1,11 @@
-﻿namespace PersonalFinanceApp;
-
-public enum TransactionType
+﻿namespace PersonalFinanceApp
 {
-    Income,
-    Expense
+    /// <summary>
+    /// Defines types of transactions.
+    /// </summary>
+    public enum TransactionType
+    {
+        Income,
+        Expense
+    }
 }
-

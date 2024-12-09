@@ -1,30 +1,51 @@
-﻿using System.ComponentModel;
-
-namespace PersonalFinanceApp;
-
-public class AddExpenseCommand : ICommand
+﻿namespace PersonalFinanceApp
 {
-    private readonly TransactionManager _transactionManager;
-    private readonly UserManager _userManager;
-
-    public AddExpenseCommand(TransactionManager transactionManager, UserManager userManager)
+    /// <summary>
+    /// Command to add an expense transaction for a user.
+    /// </summary>
+    public class AddExpenseCommand : ICommand
     {
-        _transactionManager = transactionManager;
-        _userManager = userManager;
-    }
+        private readonly TransactionService _transactionService;
+        private readonly int _userId;
 
-    public void Execute()
-    {
-        Console.Clear();
-        Console.WriteLine("Add Expense\n");
+        public AddExpenseCommand(TransactionService transactionService, int userId)
+        {
+            _transactionService = transactionService;
+            _userId = userId;
+        }
 
-        TransactionInputDTO transactionData = InputHandler.GetTransactionInput();
-        Transaction transaction = _transactionManager.CreateTransaction(transactionData, TransactionType.Expense, _userManager.CurrentUser.UserId);
-        _transactionManager.AddTransaction(transaction);
-        ConsoleUI.DisplaySuccess("Expense added successfully.");
+        /// <summary>
+        /// Executes the process of adding an expense transaction.
+        /// </summary>
+        public async Task Execute()
+        {
+            try
+            {
+                ConsoleUI.DisplayAddExpenseHeader();
 
-        Console.ReadKey();
+                TransactionInputDTO transactionData = InputHandler.GetTransactionInput();
 
+                Transaction transaction = _transactionService.CreateTransaction(
+                     transactionData,
+                     TransactionType.Expense,
+                    _userId
+                    );
 
+                bool success = await _transactionService.AddTransactionAsync(transaction, _userId);
+
+                if (success)
+                {
+                    ConsoleUI.DisplaySuccess("Expense added successfully");
+                }
+                else
+                {
+                    ConsoleUI.DisplayError("Failed to add expense.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleUI.DisplayError($"Error adding expense: {ex.Message}");
+            }
+        }
     }
 }
