@@ -1,5 +1,5 @@
-=========================================================                              
-            UPPGIFT: Integration av Databas                          
+                              
+           = UPPGIFT: Integration av Databas =                         
 =========================================================
 
 Krav för G
@@ -34,11 +34,7 @@ Felhantera alla databasoperationer
         using-satser säkerställer resurshantering för databasanslutningar.
 
 
-
-
-
-=========================================================
-               EGNA TANKAR INFÖR UPPGIFTEN                            
+            = EGNA TANKAR INFÖR UPPGIFTEN =                            
 =========================================================
 
 Siktar på att uppnå samtliga krav för VG men vill inte spendera för mycket tid på just detta projekt
@@ -47,8 +43,7 @@ baserat på vad som faktiskt behövs göras och kanske inte på att förbättra 
 Fokus är på lärande inom ramen för uppgift-specifikationen, inte utanför. 
 
 
-=========================================================
-                     DOCUMENTATION                                    
+                    = DOCUMENTATION =                                    
 =========================================================
 
                   SATURDAY, NOVEMBER 23                  
@@ -340,6 +335,6 @@ Transaction Deletion Service Updates
 
 
 =========================================================
-                          TODO:
+                        = TODO =
 =========================================================
 - Move CurrentUser from UserService to UserSessionManager and refactor accordingly.
