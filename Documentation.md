@@ -103,3 +103,4 @@ planerar jag att utforska egna projekt från grunden
 
 # TODO
 - Move `CurrentUser` from `UserService` to `UserSessionManager` och refactor accordingly.
+- Add proper logging.
